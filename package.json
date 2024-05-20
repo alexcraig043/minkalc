@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@p5-wrapper/next": "^1.0.3",
+    "@p5-wrapper/react": "^4.4.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.378.0",

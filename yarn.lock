@@ -187,6 +187,19 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@p5-wrapper/next@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.npmjs.org/@p5-wrapper/next/-/next-1.0.3.tgz#c32f3454faa69bbe35734aa2a19235f6e3c3f8d4"
+  integrity sha512-7Ty2LDEye53xMFSi1hhf67KgnUt7g+KCR+cP6Vi0lJumvyN5buVwhDkuNk8NX03THkwghKN4LaV0NeHgh8qQjQ==
+
+"@p5-wrapper/react@^4.4.0":
+  version "4.4.0"
+  resolved "https://registry.npmjs.org/@p5-wrapper/react/-/react-4.4.0.tgz#a522661d2ced4f21578c5b08109b070335bf90ed"
+  integrity sha512-4s6KEVb0of3s959tmmQ0Xc77v8Y1ZDw6sbjKR+E8Qdn5oLMfat7Wah5Az9Cs2AzljK3HQcz7WFhel5qBTKJyuQ==
+  dependencies:
+    microdiff "^1.4.0"
+    p5 ">=1.4.1 <2.0.0"
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
@@ -1752,6 +1765,11 @@ merge2@^1.3.0, merge2@^1.4.1:
   resolved "https://registry.npmjs.org/merge2/-/merge2-1.4.1.tgz#4368892f885e907455a6fd7dc55c0c9d404990ae"
   integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
+microdiff@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/microdiff/-/microdiff-1.4.0.tgz#d7fd98a6db602cd8d3ab4463ed7c0340ff9a6f2c"
+  integrity sha512-OBKBOa1VBznvLPb/3ljeJaENVe0fO0lnWl77lR4vhPlQD71UpjEoRV5P0KdQkcjbFlBu1Oy2mEUBMU3wxcBAGg==
+
 micromatch@^4.0.4, micromatch@^4.0.5:
   version "4.0.5"
   resolved "https://registry.npmjs.org/micromatch/-/micromatch-4.0.5.tgz#bc8999a7cbbf77cdc89f132f6e467051b49090c6"
@@ -1956,6 +1974,11 @@ p-locate@^5.0.0:
   integrity sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==
   dependencies:
     p-limit "^3.0.2"
+
+"p5@>=1.4.1 <2.0.0":
+  version "1.9.3"
+  resolved "https://registry.npmjs.org/p5/-/p5-1.9.3.tgz#bc0da17a392113c066f0eac749c38f14517ce07b"
+  integrity sha512-RnLMqejKJ9ZmBlUpCnVLYF1UnV/NnC13MfOSZdvJXTRH1eQkBQkUVCw5rkyRWE6chI4t5KvIJsZZnFzmGJEgag==
 
 parent-module@^1.0.0:
   version "1.0.1"
