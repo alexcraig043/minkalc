@@ -28,6 +28,7 @@ export default function Canvas() {
       "coral",
       "cyan",
     ];
+
     class Path {
       constructor(pos, colorIndex = 0) {
         this.points = [{ x: pos.x, y: pos.y }];
@@ -36,10 +37,32 @@ export default function Canvas() {
       }
 
       addPoint(pos) {
+        // Make sure this pos is not the same as the last point
+        const lastPoint = this.points[this.points.length - 1];
+        if (lastPoint.x === pos.x && lastPoint.y === pos.y) {
+          return;
+        }
+
         this.points.push({ x: pos.x, y: pos.y });
       }
 
       dragPoint(pos, index) {
+        // If this isn't the first point, make sure this pos is not the same as the last or next point
+        if (index > 0) {
+          const lastPoint = this.points[index - 1];
+          if (lastPoint.x === pos.x && lastPoint.y === pos.y) {
+            return;
+          }
+        }
+
+        // If this isn't the last point, make sure the next point isn't the same
+        if (index < this.points.length - 1) {
+          const nextPoint = this.points[index + 1];
+          if (nextPoint.x === pos.x && nextPoint.y === pos.y) {
+            return;
+          }
+        }
+
         this.points[index] = { x: pos.x, y: pos.y };
       }
 
