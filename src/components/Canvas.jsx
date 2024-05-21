@@ -25,6 +25,8 @@ export default function Canvas() {
       "orange",
       "pink",
       "brown",
+      "coral",
+      "cyan",
     ];
     class Path {
       constructor(pos, colorIndex = 0) {
@@ -242,8 +244,19 @@ export default function Canvas() {
         paths = [];
         currentPathIndex = null;
       } else if (key === "z") {
-        paths.pop();
-        currentPathIndex = null;
+        // Remove the last point of the last path
+        // If the path is now empty, remove it
+        if (paths.length > 0) {
+          const lastPath = paths[paths.length - 1];
+          lastPath.points.pop();
+
+          if (lastPath.points.length === 0) {
+            currentPathIndex = null;
+            paths.pop();
+          } else {
+            paths[paths.length - 1] = lastPath;
+          }
+        }
       }
     }
 
