@@ -6,6 +6,7 @@ export default function Canvas() {
   function sketch(p5) {
     let paths = [];
     let currentPathIndex = null;
+    let dragging = null;
 
     const circleDiameter = 15;
     const numGridLines = 25;
@@ -34,6 +35,10 @@ export default function Canvas() {
 
       addPoint(pos) {
         this.points.push({ x: pos.x, y: pos.y });
+      }
+
+      dragPoint(pos, index) {
+        this.points[index] = { x: pos.x, y: pos.y };
       }
 
       draw(p5) {
@@ -88,6 +93,22 @@ export default function Canvas() {
       return { x: nearestX, y: nearestY };
     }
 
+    function getGridPointIntersection(p5, gridPoint) {
+      for (let i = paths.length - 1; i >= 0; i--) {
+        const path = paths[i];
+
+        for (let j = 0; j < path.points.length; j++) {
+          const point = path.points[j];
+
+          if (point.x === gridPoint.x && point.y === gridPoint.y) {
+            return { pathIndex: i, pointIndex: j };
+          }
+        }
+      }
+
+      return null;
+    }
+
     function drawGrid(p5) {
       // Draw the horizontal grid lines
 
@@ -130,16 +151,21 @@ export default function Canvas() {
       if (mousePos) {
         const nearestPoint = getNearestGridPoint(p5, mousePos);
 
-        p5.translate(padding, padding);
+        const gridPointIntersection = getGridPointIntersection(
+          p5,
+          nearestPoint
+        );
 
         let color;
-
         if (currentPathIndex !== null) {
           color = getColor(currentPathIndex);
+        } else if (gridPointIntersection !== null) {
+          color = getColor(gridPointIntersection.pathIndex);
         } else {
           color = getColor(paths.length);
         }
 
+        p5.translate(padding, padding);
         p5.noStroke();
         p5.fill(color);
         p5.ellipse(nearestPoint.x, nearestPoint.y, circleDiameter);
@@ -179,12 +205,33 @@ export default function Canvas() {
           pathsCopy[currentPathIndex] = currentPath;
           paths = pathsCopy;
         } else {
-          currentPathIndex = paths.length;
-          const newPath = new Path(nearestPoint, currentPathIndex);
-          paths = [...paths, newPath];
+          const gridPointIntersection = getGridPointIntersection(
+            p5,
+            nearestPoint
+          );
+          if (gridPointIntersection !== null) {
+            dragging = gridPointIntersection;
+          } else {
+            currentPathIndex = paths.length;
+            const newPath = new Path(nearestPoint, currentPathIndex);
+            paths = [...paths, newPath];
+          }
         }
-      } else {
-        currentPathIndex = null;
+      }
+      // else {
+      //   currentPathIndex = null;
+      // }
+    }
+
+    function handleMouseDragged(p5) {
+      const mousePos = getMouseInsideGrid(p5);
+
+      // If mouse pressed inside the grid and in dragging mode
+      if (mousePos && dragging !== null && currentPathIndex === null) {
+        const nearestPoint = getNearestGridPoint(p5, mousePos);
+
+        const draggingPath = paths[dragging.pathIndex];
+        draggingPath.dragPoint(nearestPoint, dragging.pointIndex);
       }
     }
 
@@ -193,6 +240,9 @@ export default function Canvas() {
         currentPathIndex = null;
       } else if (key === "x") {
         paths = [];
+        currentPathIndex = null;
+      } else if (key === "z") {
+        paths.pop();
         currentPathIndex = null;
       }
     }
@@ -214,8 +264,15 @@ export default function Canvas() {
       handleMousePressed(p5);
     };
 
+    p5.mouseDragged = () => {
+      handleMouseDragged(p5);
+    };
+
+    p5.mouseReleased = () => {
+      dragging = null;
+    };
+
     p5.keyPressed = () => {
-      console.log(p5.key);
       handleKeyPressed(p5, p5.key);
     };
   }
