@@ -98,27 +98,27 @@ export default function Canvas() {
       // Draw vertical grid lines
       for (let x = 0; x <= gridSize; x += verticalGridSpacing) {
         if (x === 0) {
-          p5.line(x + 1, 1, x + 1, gridSize - 1);
+          p5.line(x, 0, x, gridSize);
           continue;
         } else if (x >= gridSize) {
-          p5.line(x - 1, 1, x - 1, gridSize - 1);
+          p5.line(x, 0, x, gridSize);
           continue;
         }
 
-        p5.line(x, 1, x, gridSize - 1);
+        p5.line(x, 0, x, gridSize);
       }
 
       // Draw horizontal grid lines
       for (let y = 0; y <= gridSize; y += horizontalGridSpacing) {
         if (y === 0) {
-          p5.line(1, y + 1, gridSize - 1, y + 1);
+          p5.line(0, y, gridSize, y);
           continue;
         } else if (y >= gridSize) {
-          p5.line(1, y - 1, gridSize - 1, y - 1);
+          p5.line(0, y, gridSize, y);
           continue;
         }
 
-        p5.line(1, y, gridSize - 1, y);
+        p5.line(0, y, gridSize, y);
       }
 
       p5.translate(-padding, -padding);
