@@ -149,8 +149,6 @@ export default function Canvas() {
 
           const angle = p5.degrees(Math.atan2(dy, dx));
 
-          console.log("index", i, "angle", angle);
-
           let bisectorAngle = null;
 
           if (angle <= 0 && angle > -90) {
@@ -163,12 +161,8 @@ export default function Canvas() {
             bisectorAngle = 135;
           }
 
-          console.log("index", i, "bisectorAngle", bisectorAngle);
-
           // Calculate the bisected angle with 45-degree line
           const bisectedAngle = angle - (angle - bisectorAngle) * 2;
-
-          console.log("index", i, "bisectedAngle", bisectedAngle);
 
           p5.push();
           p5.translate(event1.x, event1.y);
