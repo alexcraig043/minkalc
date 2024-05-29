@@ -285,10 +285,18 @@ export default function Canvas() {
         gridPoint.y - Math.min(distanceToLeft, distanceToTop)
       );
       p5.vertex(
+        gridPoint.x - Math.min(distanceToLeft, distanceToTop),
+        gridPoint.y - distanceToTop
+      );
+      p5.vertex(
+        gridPoint.x + Math.min(distanceToRight, distanceToTop),
+        gridPoint.y - distanceToTop
+      );
+      p5.vertex(
         gridPoint.x + Math.min(distanceToRight, distanceToTop),
         gridPoint.y - Math.min(distanceToRight, distanceToTop)
       );
-      p5.endShape(p5.CLOSE);
+      p5.endShape();
 
       // Bottom triangle
       p5.beginShape();
@@ -298,10 +306,18 @@ export default function Canvas() {
         gridPoint.y + Math.min(distanceToLeft, distanceToBottom)
       );
       p5.vertex(
+        gridPoint.x - Math.min(distanceToLeft, distanceToBottom),
+        gridPoint.y + distanceToBottom
+      );
+      p5.vertex(
+        gridPoint.x + Math.min(distanceToRight, distanceToBottom),
+        gridPoint.y + distanceToBottom
+      );
+      p5.vertex(
         gridPoint.x + Math.min(distanceToRight, distanceToBottom),
         gridPoint.y + Math.min(distanceToRight, distanceToBottom)
       );
-      p5.endShape(p5.CLOSE);
+      p5.endShape();
 
       p5.pop();
     }
