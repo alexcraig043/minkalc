@@ -4,11 +4,6 @@ import { NextReactP5Wrapper } from "@p5-wrapper/next";
 
 export default function Canvas() {
   function sketch(p5) {
-    let paths = [];
-    let currentPathIndex = null;
-    let dragging = null;
-    let hasDragged = false;
-
     const circleDiameter = 15;
     const numGridLines = 24;
     const padding = circleDiameter / 2;
@@ -17,6 +12,12 @@ export default function Canvas() {
 
     const verticalGridSpacing = gridSize / numGridLines;
     const horizontalGridSpacing = gridSize / numGridLines;
+
+    let paths = [];
+    let currentPathIndex = null;
+    let draggingIndex = null;
+    let hasDragged = false;
+    let shouldDrawLightCones = true;
 
     const colors = [
       "red",
@@ -30,11 +31,26 @@ export default function Canvas() {
       "cyan",
     ];
 
+    const opacity = 0.5;
+
+    const colorsTrans = [
+      `rgba(255, 0, 0, ${opacity})`,
+      `rgba(0, 0, 255, ${opacity})`,
+      `rgba(0, 128, 0, ${opacity})`,
+      `rgba(128, 0, 128, ${opacity})`,
+      `rgba(255, 165, 0, ${opacity})`,
+      `rgba(255, 192, 203, ${opacity})`,
+      `rgba(165, 42, 42, ${opacity})`,
+      `rgba(255, 127, 80, ${opacity})`,
+      `rgba(0, 255, 255, ${opacity})`,
+    ];
+
     class Path {
       constructor(pos, colorIndex = 0) {
         this.events = [{ x: pos.x, y: pos.y }];
         this.intervals = [];
         this.color = getColor(colorIndex);
+        this.colorTrans = getColor(colorIndex, true);
       }
 
       addPoint(pos) {
@@ -68,6 +84,7 @@ export default function Canvas() {
       }
 
       draw(p5) {
+        p5.push();
         p5.translate(padding, padding);
 
         p5.fill(this.color);
@@ -86,7 +103,7 @@ export default function Canvas() {
           }
         }
 
-        p5.translate(-padding, -padding);
+        p5.pop();
       }
     }
 
@@ -106,7 +123,11 @@ export default function Canvas() {
       return null;
     }
 
-    function getColor(index) {
+    function getColor(index, transparent = false) {
+      if (transparent) {
+        return colorsTrans[index % colorsTrans.length];
+      }
+
       return colors[index % colors.length];
     }
 
@@ -119,7 +140,7 @@ export default function Canvas() {
       return { x: nearestX, y: nearestY };
     }
 
-    function getNearestEvent(p5, gridPoint) {
+    function getGridPointEventIndex(p5, gridPoint) {
       for (let i = paths.length - 1; i >= 0; i--) {
         const path = paths[i];
 
@@ -188,27 +209,41 @@ export default function Canvas() {
       p5.translate(-padding, -padding);
     }
 
-    function handleMouseHover(p5) {
+    function drawHover(p5) {
       const mousePos = getMouseInsideGrid(p5);
 
       if (mousePos) {
         const nearestGridPoint = getNearestGridPoint(p5, mousePos);
+        const gridPointEventIndex = getGridPointEventIndex(
+          p5,
+          nearestGridPoint
+        );
 
-        const nearestEvent = getNearestEvent(p5, nearestGridPoint);
+        let shouldDrawEvent = false;
+        let shouldDrawLightCone = false;
 
         let color;
         if (currentPathIndex !== null) {
           color = getColor(currentPathIndex);
-        } else if (nearestEvent !== null) {
-          color = getColor(nearestEvent.pathIndex);
+          shouldDrawEvent = true;
+        } else if (gridPointEventIndex !== null) {
+          color = getColor(gridPointEventIndex.pathIndex, true);
+          shouldDrawLightCone = true;
         } else {
           color = getColor(paths.length);
+          shouldDrawEvent = true;
         }
 
+        p5.push();
         p5.translate(padding, padding);
-        p5.noStroke();
-        p5.fill(color);
-        p5.ellipse(nearestGridPoint.x, nearestGridPoint.y, circleDiameter);
+
+        if (shouldDrawEvent) {
+          p5.noStroke();
+          p5.fill(color);
+          p5.ellipse(nearestGridPoint.x, nearestGridPoint.y, circleDiameter);
+        } else if (shouldDrawLightCones && shouldDrawLightCone) {
+          drawLightCone(p5, nearestGridPoint, color);
+        }
 
         // Draw line to the last point in the current path
         if (currentPathIndex !== null) {
@@ -227,8 +262,52 @@ export default function Canvas() {
           }
         }
 
-        p5.translate(-padding, -padding);
+        p5.pop();
       }
+    }
+
+    function drawLightCone(p5, gridPoint, color) {
+      p5.push();
+      p5.noStroke();
+      p5.fill(color);
+
+      // Calculate the maximum distance to the grid boundaries from the current point
+      const distanceToTop = gridPoint.y;
+      const distanceToBottom = gridSize - gridPoint.y;
+      const distanceToLeft = gridPoint.x;
+      const distanceToRight = gridSize - gridPoint.x;
+
+      // Top triangle
+      p5.beginShape();
+      p5.vertex(gridPoint.x, gridPoint.y);
+      p5.vertex(
+        gridPoint.x - Math.min(distanceToLeft, distanceToTop),
+        gridPoint.y - Math.min(distanceToLeft, distanceToTop)
+      );
+      p5.vertex(
+        gridPoint.x + Math.min(distanceToRight, distanceToTop),
+        gridPoint.y - Math.min(distanceToRight, distanceToTop)
+      );
+      p5.endShape(p5.CLOSE);
+
+      // Bottom triangle
+      p5.beginShape();
+      p5.vertex(gridPoint.x, gridPoint.y);
+      p5.vertex(
+        gridPoint.x - Math.min(distanceToLeft, distanceToBottom),
+        gridPoint.y + Math.min(distanceToLeft, distanceToBottom)
+      );
+      p5.vertex(
+        gridPoint.x + Math.min(distanceToRight, distanceToBottom),
+        gridPoint.y + Math.min(distanceToRight, distanceToBottom)
+      );
+      p5.endShape(p5.CLOSE);
+
+      p5.pop();
+    }
+
+    function handleLightCones(p5) {
+      const mousePos = getMouseInsideGrid(p5);
     }
 
     function drawPaths(p5) {
@@ -252,10 +331,13 @@ export default function Canvas() {
           paths = pathsCopy;
         } else {
           // If not currently drawing a path
-          const nearestEvent = getNearestEvent(p5, nearestGridPoint);
-          if (nearestEvent !== null) {
+          const gridPointEventIndex = getGridPointEventIndex(
+            p5,
+            nearestGridPoint
+          );
+          if (gridPointEventIndex !== null) {
             // If the nearest point is an existing point, then start dragging
-            dragging = nearestEvent;
+            draggingIndex = gridPointEventIndex;
           } else {
             // If the nearest point is not an existing point, then start a new path
             currentPathIndex = paths.length;
@@ -281,30 +363,28 @@ export default function Canvas() {
           // If clicked on the last event of a path, then set the current path to that path
           currentPathIndex = clickedOnLastEvent;
         }
-
-        console.log(clickedOnLastEvent);
       }
 
-      dragging = null;
+      draggingIndex = null;
       hasDragged = false;
     }
 
     function handleMouseDragged(p5) {
       const mousePos = getMouseInsideGrid(p5);
 
-      if (mousePos && dragging !== null && currentPathIndex === null) {
+      if (mousePos && draggingIndex !== null && currentPathIndex === null) {
         // If mouse pressed inside the grid and in dragging mode
         const nearestGridPoint = getNearestGridPoint(p5, mousePos);
 
-        const draggingPath = paths[dragging.pathIndex];
-        const draggingEvent = draggingPath.events[dragging.eventIndex];
+        const draggingPath = paths[draggingIndex.pathIndex];
+        const draggingEvent = draggingPath.events[draggingIndex.eventIndex];
 
         if (
           draggingEvent.x !== nearestGridPoint.x ||
           draggingEvent.y !== nearestGridPoint.y
         ) {
           // If draggingEvent !== nearestGridPoint, then drag the event
-          draggingPath.dragPoint(nearestGridPoint, dragging.eventIndex);
+          draggingPath.dragPoint(nearestGridPoint, draggingIndex.eventIndex);
           hasDragged = true;
         }
       }
@@ -343,7 +423,8 @@ export default function Canvas() {
       p5.clear();
       drawGrid(p5);
       drawPaths(p5);
-      handleMouseHover(p5);
+      drawHover(p5);
+      handleLightCones(p5);
     };
 
     p5.mousePressed = () => {
