@@ -17,7 +17,7 @@ export default function Canvas() {
     let currentPathIndex = null;
     let draggingIndex = null;
     let hasDragged = false;
-    let shouldDrawLightCones = true;
+    let shouldDrawLightCones = false;
 
     const colors = [
       "red",
@@ -31,7 +31,7 @@ export default function Canvas() {
       "cyan",
     ];
 
-    const opacity = 0.5;
+    const opacity = 0.25;
 
     const colorsTrans = [
       `rgba(255, 0, 0, ${opacity})`,
@@ -101,6 +101,86 @@ export default function Canvas() {
             const prevPoint = this.events[i - 1];
             p5.line(prevPoint.x, prevPoint.y, point.x, point.y);
           }
+        }
+
+        p5.pop();
+      }
+
+      drawHyperPlanes(p5) {
+        p5.push();
+        p5.translate(padding, padding);
+        p5.angleMode(p5.DEGREES);
+
+        for (let i = 0; i < this.events.length; i++) {
+          if (this.events.length < 2) {
+            break;
+          }
+
+          let event1 = this.events[i];
+          let event2 = this.events[i - 1];
+
+          if (i === 0) {
+            event2 = this.events[i + 1];
+          }
+
+          if (!event2) {
+            continue;
+          }
+
+          let dx = event2.x - event1.x;
+          let dy = event2.y - event1.y;
+
+          if (Math.abs(dx) > Math.abs(dy)) {
+            // If traveling faster the speed of light
+            if (i < this.events.length - 1) {
+              // If not the last event, then check the next event
+              event2 = this.events[i + 1];
+
+              dx = event2.x - event1.x;
+              dy = event2.y - event1.y;
+
+              if (Math.abs(dx) > Math.abs(dy)) {
+                continue;
+              }
+            } else {
+              continue;
+            }
+          }
+
+          const angle = p5.degrees(Math.atan2(dy, dx));
+
+          console.log("index", i, "angle", angle);
+
+          let bisectorAngle = null;
+
+          if (angle <= 0 && angle > -90) {
+            bisectorAngle = -45;
+          } else if (angle <= -90 && angle > -180) {
+            bisectorAngle = -135;
+          } else if (angle >= 0 && angle < 90) {
+            bisectorAngle = 45;
+          } else if (angle >= 90 && angle < 180) {
+            bisectorAngle = 135;
+          }
+
+          console.log("index", i, "bisectorAngle", bisectorAngle);
+
+          // Calculate the bisected angle with 45-degree line
+          const bisectedAngle = angle - (angle - bisectorAngle) * 2;
+
+          console.log("index", i, "bisectedAngle", bisectedAngle);
+
+          p5.push();
+          p5.translate(event1.x, event1.y);
+          p5.stroke(this.color);
+          p5.strokeWeight(3);
+          p5.drawingContext.setLineDash([5, 15]);
+
+          p5.rotate(bisectedAngle);
+          p5.line(0, 0, gridSize, 0);
+          p5.rotate(180);
+          p5.line(0, 0, gridSize, 0);
+          p5.pop();
         }
 
         p5.pop();
@@ -330,6 +410,10 @@ export default function Canvas() {
       paths.forEach((path) => path.draw(p5));
     }
 
+    function drawHyperPlanes(p5) {
+      paths.forEach((path) => path.drawHyperPlanes(p5));
+    }
+
     function handleMousePressed(p5) {
       const mousePos = getMouseInsideGrid(p5);
 
@@ -439,6 +523,7 @@ export default function Canvas() {
       p5.clear();
       drawGrid(p5);
       drawPaths(p5);
+      drawHyperPlanes(p5);
       drawHover(p5);
       handleLightCones(p5);
     };
