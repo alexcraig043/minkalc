@@ -7,9 +7,10 @@ export default function Canvas() {
     let paths = [];
     let currentPathIndex = null;
     let dragging = null;
+    let hasDragged = false;
 
     const circleDiameter = 15;
-    const numGridLines = 25;
+    const numGridLines = 24;
     const padding = circleDiameter / 2;
     const canvasSize = 600;
     const gridSize = canvasSize - 2 * padding;
@@ -31,39 +32,39 @@ export default function Canvas() {
 
     class Path {
       constructor(pos, colorIndex = 0) {
-        this.points = [{ x: pos.x, y: pos.y }];
+        this.events = [{ x: pos.x, y: pos.y }];
         this.intervals = [];
         this.color = getColor(colorIndex);
       }
 
       addPoint(pos) {
         // Make sure this pos is not the same as the last point
-        const lastPoint = this.points[this.points.length - 1];
+        const lastPoint = this.events[this.events.length - 1];
         if (lastPoint.x === pos.x && lastPoint.y === pos.y) {
           return;
         }
 
-        this.points.push({ x: pos.x, y: pos.y });
+        this.events.push({ x: pos.x, y: pos.y });
       }
 
       dragPoint(pos, index) {
         // If this isn't the first point, make sure this pos is not the same as the last or next point
         if (index > 0) {
-          const lastPoint = this.points[index - 1];
+          const lastPoint = this.events[index - 1];
           if (lastPoint.x === pos.x && lastPoint.y === pos.y) {
             return;
           }
         }
 
         // If this isn't the last point, make sure the next point isn't the same
-        if (index < this.points.length - 1) {
-          const nextPoint = this.points[index + 1];
+        if (index < this.events.length - 1) {
+          const nextPoint = this.events[index + 1];
           if (nextPoint.x === pos.x && nextPoint.y === pos.y) {
             return;
           }
         }
 
-        this.points[index] = { x: pos.x, y: pos.y };
+        this.events[index] = { x: pos.x, y: pos.y };
       }
 
       draw(p5) {
@@ -71,16 +72,16 @@ export default function Canvas() {
 
         p5.fill(this.color);
 
-        for (let i = 0; i < this.points.length; i++) {
+        for (let i = 0; i < this.events.length; i++) {
           p5.noStroke();
-          const point = this.points[i];
+          const point = this.events[i];
           p5.ellipse(point.x, point.y, circleDiameter);
 
-          if (i > 0 && i < this.points.length) {
+          if (i > 0 && i < this.events.length) {
             p5.stroke(this.color);
             p5.strokeWeight(3);
 
-            const prevPoint = this.points[i - 1];
+            const prevPoint = this.events[i - 1];
             p5.line(prevPoint.x, prevPoint.y, point.x, point.y);
           }
         }
@@ -118,16 +119,33 @@ export default function Canvas() {
       return { x: nearestX, y: nearestY };
     }
 
-    function getGridPointIntersection(p5, gridPoint) {
+    function getNearestEvent(p5, gridPoint) {
       for (let i = paths.length - 1; i >= 0; i--) {
         const path = paths[i];
 
-        for (let j = 0; j < path.points.length; j++) {
-          const point = path.points[j];
+        for (let j = 0; j < path.events.length; j++) {
+          const point = path.events[j];
 
           if (point.x === gridPoint.x && point.y === gridPoint.y) {
-            return { pathIndex: i, pointIndex: j };
+            return { pathIndex: i, eventIndex: j };
           }
+        }
+      }
+
+      return null;
+    }
+
+    function getClickedOnLastEvent(p5, gridPoint) {
+      if (currentPathIndex !== null) {
+        return null;
+      }
+
+      for (let i = paths.length - 1; i >= 0; i--) {
+        const path = paths[i];
+
+        const lastPoint = path.events[path.events.length - 1];
+        if (lastPoint.x === gridPoint.x && lastPoint.y === gridPoint.y) {
+          return i;
         }
       }
 
@@ -170,22 +188,19 @@ export default function Canvas() {
       p5.translate(-padding, -padding);
     }
 
-    function drawHover(p5) {
+    function handleMouseHover(p5) {
       const mousePos = getMouseInsideGrid(p5);
 
       if (mousePos) {
-        const nearestPoint = getNearestGridPoint(p5, mousePos);
+        const nearestGridPoint = getNearestGridPoint(p5, mousePos);
 
-        const gridPointIntersection = getGridPointIntersection(
-          p5,
-          nearestPoint
-        );
+        const nearestEvent = getNearestEvent(p5, nearestGridPoint);
 
         let color;
         if (currentPathIndex !== null) {
           color = getColor(currentPathIndex);
-        } else if (gridPointIntersection !== null) {
-          color = getColor(gridPointIntersection.pathIndex);
+        } else if (nearestEvent !== null) {
+          color = getColor(nearestEvent.pathIndex);
         } else {
           color = getColor(paths.length);
         }
@@ -193,17 +208,22 @@ export default function Canvas() {
         p5.translate(padding, padding);
         p5.noStroke();
         p5.fill(color);
-        p5.ellipse(nearestPoint.x, nearestPoint.y, circleDiameter);
+        p5.ellipse(nearestGridPoint.x, nearestGridPoint.y, circleDiameter);
 
         // Draw line to the last point in the current path
         if (currentPathIndex !== null) {
           const currentPath = paths[currentPathIndex];
 
-          if (currentPath.points.length > 0) {
-            const lastPoint = currentPath.points[currentPath.points.length - 1];
+          if (currentPath.events.length > 0) {
+            const lastPoint = currentPath.events[currentPath.events.length - 1];
             p5.stroke(color);
             p5.strokeWeight(3);
-            p5.line(lastPoint.x, lastPoint.y, nearestPoint.x, nearestPoint.y);
+            p5.line(
+              lastPoint.x,
+              lastPoint.y,
+              nearestGridPoint.x,
+              nearestGridPoint.y
+            );
           }
         }
 
@@ -218,27 +238,28 @@ export default function Canvas() {
     function handleMousePressed(p5) {
       const mousePos = getMouseInsideGrid(p5);
 
-      // If mouse pressed inside the grid
       if (mousePos) {
-        const nearestPoint = getNearestGridPoint(p5, mousePos);
+        // If mouse pressed inside the grid
+        const nearestGridPoint = getNearestGridPoint(p5, mousePos);
 
         if (currentPathIndex !== null) {
+          // If currently drawing a path, then add the point to the path
           const currentPath = paths[currentPathIndex];
-          currentPath.addPoint(nearestPoint);
+          currentPath.addPoint(nearestGridPoint);
 
           let pathsCopy = [...paths];
           pathsCopy[currentPathIndex] = currentPath;
           paths = pathsCopy;
         } else {
-          const gridPointIntersection = getGridPointIntersection(
-            p5,
-            nearestPoint
-          );
-          if (gridPointIntersection !== null) {
-            dragging = gridPointIntersection;
+          // If not currently drawing a path
+          const nearestEvent = getNearestEvent(p5, nearestGridPoint);
+          if (nearestEvent !== null) {
+            // If the nearest point is an existing point, then start dragging
+            dragging = nearestEvent;
           } else {
+            // If the nearest point is not an existing point, then start a new path
             currentPathIndex = paths.length;
-            const newPath = new Path(nearestPoint, currentPathIndex);
+            const newPath = new Path(nearestGridPoint, currentPathIndex);
             paths = [...paths, newPath];
           }
         }
@@ -248,15 +269,44 @@ export default function Canvas() {
       // }
     }
 
+    function handleMouseReleased(p5) {
+      const mousePos = getMouseInsideGrid(p5);
+
+      if (mousePos && !hasDragged && currentPathIndex === null) {
+        // If mouse released without dragging and not currently drawing a path
+        const nearestGridPoint = getNearestGridPoint(p5, mousePos);
+        const clickedOnLastEvent = getClickedOnLastEvent(p5, nearestGridPoint);
+
+        if (clickedOnLastEvent !== null) {
+          // If clicked on the last event of a path, then set the current path to that path
+          currentPathIndex = clickedOnLastEvent;
+        }
+
+        console.log(clickedOnLastEvent);
+      }
+
+      dragging = null;
+      hasDragged = false;
+    }
+
     function handleMouseDragged(p5) {
       const mousePos = getMouseInsideGrid(p5);
 
-      // If mouse pressed inside the grid and in dragging mode
       if (mousePos && dragging !== null && currentPathIndex === null) {
-        const nearestPoint = getNearestGridPoint(p5, mousePos);
+        // If mouse pressed inside the grid and in dragging mode
+        const nearestGridPoint = getNearestGridPoint(p5, mousePos);
 
         const draggingPath = paths[dragging.pathIndex];
-        draggingPath.dragPoint(nearestPoint, dragging.pointIndex);
+        const draggingEvent = draggingPath.events[dragging.eventIndex];
+
+        if (
+          draggingEvent.x !== nearestGridPoint.x ||
+          draggingEvent.y !== nearestGridPoint.y
+        ) {
+          // If draggingEvent !== nearestGridPoint, then drag the event
+          draggingPath.dragPoint(nearestGridPoint, dragging.eventIndex);
+          hasDragged = true;
+        }
       }
     }
 
@@ -267,13 +317,13 @@ export default function Canvas() {
         paths = [];
         currentPathIndex = null;
       } else if (key === "z") {
-        // Remove the last point of the last path
+        // Remove the last event of the last path
         // If the path is now empty, remove it
         if (paths.length > 0) {
           const lastPath = paths[paths.length - 1];
-          lastPath.points.pop();
+          lastPath.events.pop();
 
-          if (lastPath.points.length === 0) {
+          if (lastPath.events.length === 0) {
             currentPathIndex = null;
             paths.pop();
           } else {
@@ -293,7 +343,7 @@ export default function Canvas() {
       p5.clear();
       drawGrid(p5);
       drawPaths(p5);
-      drawHover(p5);
+      handleMouseHover(p5);
     };
 
     p5.mousePressed = () => {
@@ -305,7 +355,7 @@ export default function Canvas() {
     };
 
     p5.mouseReleased = () => {
-      dragging = null;
+      handleMouseReleased(p5);
     };
 
     p5.keyPressed = () => {
