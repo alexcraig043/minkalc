@@ -2,7 +2,7 @@
 
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 
-export default function Canvas() {
+export default function Canvas({ setTimeIntervals, getColor }) {
   function sketch(p5) {
     const circleDiameter = 15;
     const numGridLines = 24;
@@ -23,38 +23,41 @@ export default function Canvas() {
     let pulseHyperPlanesY = canvasSize;
     const pulseDelta = 1;
 
-    const colors = [
-      "red",
-      "blue",
-      "green",
-      "purple",
-      "orange",
-      "pink",
-      "brown",
-      "coral",
-      "cyan",
-    ];
-
-    const opacity = 0.25;
-
-    const colorsTrans = [
-      `rgba(255, 0, 0, ${opacity})`,
-      `rgba(0, 0, 255, ${opacity})`,
-      `rgba(0, 128, 0, ${opacity})`,
-      `rgba(128, 0, 128, ${opacity})`,
-      `rgba(255, 165, 0, ${opacity})`,
-      `rgba(255, 192, 203, ${opacity})`,
-      `rgba(165, 42, 42, ${opacity})`,
-      `rgba(255, 127, 80, ${opacity})`,
-      `rgba(0, 255, 255, ${opacity})`,
-    ];
-
     class Path {
       constructor(pos, colorIndex = 0) {
         this.events = [{ x: pos.x, y: pos.y }];
-        this.intervals = [];
+        this.timeIntervals = [];
         this.color = getColor(colorIndex);
         this.colorTrans = getColor(colorIndex, true);
+      }
+
+      calculateTimeIntervals() {
+        this.timeIntervals = [];
+
+        for (let i = 0; i < this.events.length - 1; i++) {
+          const event1 = this.events[i];
+          const event2 = this.events[i + 1];
+
+          let dx = event2.x - event1.x;
+          let dy = event2.y - event1.y;
+
+          if (Math.abs(dx) > Math.abs(dy)) {
+            this.timeIntervals.push(null);
+            continue;
+          }
+
+          // Scale the distance by the grid spacing
+          dx = dx / verticalGridSpacing;
+          dy = dy / horizontalGridSpacing;
+
+          const interval = dy * dy - dx * dx;
+
+          const timeInterval = Math.sqrt(interval);
+
+          this.timeIntervals.push(timeInterval);
+        }
+
+        return this.timeIntervals;
       }
 
       addPoint(pos) {
@@ -63,8 +66,8 @@ export default function Canvas() {
           const testPoint = this.events[i];
           if (testPoint.x == pos.x && testPoint.y == pos.y) {
             // Start dragging testPoint
-            draggingIndex = { pathIndex: currentPathIndex, eventIndex: i };
-            currentPathIndex = null;
+            // draggingIndex = { pathIndex: currentPathIndex, eventIndex: i };
+            // currentPathIndex = null;
 
             return;
           }
@@ -308,14 +311,6 @@ export default function Canvas() {
       return null;
     }
 
-    function getColor(index, transparent = false) {
-      if (transparent) {
-        return colorsTrans[index % colorsTrans.length];
-      }
-
-      return colors[index % colors.length];
-    }
-
     function getNearestGridPoint(p5, mousePos) {
       const nearestX =
         Math.round(mousePos.x / verticalGridSpacing) * verticalGridSpacing;
@@ -523,6 +518,12 @@ export default function Canvas() {
       paths.forEach((path) => path.draw(p5));
     }
 
+    function calculateTimeIntervals() {
+      paths.forEach((path) => path.calculateTimeIntervals());
+      // setTimeIntervals(paths.map((path) => path.timeIntervals));
+      console.log(paths.map((path) => path.timeIntervals));
+    }
+
     function drawHyperPlanes(p5) {
       paths.forEach((path) => path.drawHyperPlanes(p5));
     }
@@ -644,6 +645,7 @@ export default function Canvas() {
       if (shouldPulseHyperPlanes) {
         pulseHyperPlanes(p5);
       }
+      calculateTimeIntervals();
       drawPaths(p5);
       drawHover(p5);
     };

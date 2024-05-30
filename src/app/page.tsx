@@ -8,6 +8,42 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 export default function Home() {
+  const [timeIntervals, setTimeIntervals] = useState([]);
+
+  const colors = [
+    "red",
+    "blue",
+    "green",
+    "purple",
+    "orange",
+    "pink",
+    "brown",
+    "coral",
+    "cyan",
+  ];
+
+  const opacity = 0.25;
+
+  const colorsTrans = [
+    `rgba(255, 0, 0, ${opacity})`,
+    `rgba(0, 0, 255, ${opacity})`,
+    `rgba(0, 128, 0, ${opacity})`,
+    `rgba(128, 0, 128, ${opacity})`,
+    `rgba(255, 165, 0, ${opacity})`,
+    `rgba(255, 192, 203, ${opacity})`,
+    `rgba(165, 42, 42, ${opacity})`,
+    `rgba(255, 127, 80, ${opacity})`,
+    `rgba(0, 255, 255, ${opacity})`,
+  ];
+
+  function getColor(index, transparent = false) {
+    if (transparent) {
+      return colorsTrans[index % colorsTrans.length];
+    }
+
+    return colors[index % colors.length];
+  }
+
   return (
     <main className="container flex h-screen flex-col items-center p-8 gap-2">
       <div className="flex flex-col items-center gap-2">
@@ -49,7 +85,8 @@ export default function Home() {
               mode.
             </li>
             <li>
-              <span className="font-bold">Drag</span> an event to move it.
+              <span className="font-bold">Drag</span> an event to move it
+              (cannot be in drawing mode).
             </li>
             <li>
               <span className="font-bold">Click</span> on the last event of a
@@ -80,7 +117,7 @@ export default function Home() {
             delay: 0.5,
           }}
         >
-          <Canvas />
+          <Canvas setTimeIntervals={setTimeIntervals} getColor={getColor} />
         </motion.div>
         <motion.div
           className="flex flex-col flex-1 items-start h-full"
@@ -95,36 +132,9 @@ export default function Home() {
           }}
         >
           <h2 className="text-xl font-bold-md text-center text-primary">
-            Information
+            Time Intervals
           </h2>
-          <ul className="list-disc p-2 text-primary pl-6">
-            <li>
-              <span className="font-bold">Click</span> to add an event and enter
-              drawing mode.
-            </li>
-            <li>
-              Press <span className="font-bold">escape</span> to exit drawing
-              mode.
-            </li>
-            <li>
-              <span className="font-bold">Drag</span> an event to move it.
-            </li>
-            <li>
-              <span className="font-bold">Click</span> on the last event of a
-              worldline to add more events (cannot be in drawing mode).
-            </li>
-            <li>
-              <span className="font-bold">Hover</span> on an event to show its
-              lightcone (cannot be in drawing mode).
-            </li>
-            <li>
-              Press <span className="font-bold">z</span> to undo last event.
-            </li>
-            <li>
-              Press <span className="font-bold">x</span> to clear all
-              worldlines.
-            </li>
-          </ul>
+          <ul className="list-disc p-2 text-primary pl-6"></ul>
         </motion.div>
       </div>
     </main>
