@@ -8,8 +8,6 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 export default function Home() {
-  const [paths, setPaths] = useState([]);
-
   return (
     <main className="container flex h-screen flex-col items-center p-8 gap-2">
       <div className="flex flex-col items-center gap-2">
@@ -82,7 +80,7 @@ export default function Home() {
             delay: 0.5,
           }}
         >
-          <Canvas paths={paths} setPaths={setPaths} />
+          <Canvas />
         </motion.div>
         <motion.div
           className="flex flex-col flex-1 items-start h-full"
