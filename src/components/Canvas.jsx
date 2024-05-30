@@ -2,7 +2,7 @@
 
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 
-export default function Canvas() {
+export default function Canvas({ paths, setPaths }) {
   function sketch(p5) {
     const circleDiameter = 15;
     const numGridLines = 24;
@@ -13,7 +13,6 @@ export default function Canvas() {
     const verticalGridSpacing = gridSize / numGridLines;
     const horizontalGridSpacing = gridSize / numGridLines;
 
-    let paths = [];
     let currentPathIndex = null;
     let draggingIndex = null;
     let hasDragged = false;
@@ -62,6 +61,10 @@ export default function Canvas() {
         for (let i = 0; i < this.events.length; i++) {
           const testPoint = this.events[i];
           if (testPoint.x == pos.x && testPoint.y == pos.y) {
+            // Start dragging testPoint
+            draggingIndex = { pathIndex: currentPathIndex, eventIndex: i };
+            currentPathIndex = null;
+
             return;
           }
         }
@@ -537,7 +540,7 @@ export default function Canvas() {
 
           let pathsCopy = [...paths];
           pathsCopy[currentPathIndex] = currentPath;
-          paths = pathsCopy;
+          setPaths(pathsCopy);
         } else {
           // If not currently drawing a path
           const gridPointEventIndex = getGridPointEventIndex(
@@ -551,7 +554,7 @@ export default function Canvas() {
             // If the nearest point is not an existing point, then start a new path
             currentPathIndex = paths.length;
             const newPath = new Path(nearestGridPoint, currentPathIndex);
-            paths = [...paths, newPath];
+            setPaths([...paths, newPath]);
           }
         }
       }
@@ -606,7 +609,7 @@ export default function Canvas() {
       if (key === "Escape") {
         currentPathIndex = null;
       } else if (key === "x") {
-        paths = [];
+        setPaths([]);
         currentPathIndex = null;
       } else if (key === "z") {
         // Remove the last event of the last path
