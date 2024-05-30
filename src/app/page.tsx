@@ -5,19 +5,14 @@ import Canvas from "@/components/Canvas";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const timeIntervalsRef = useRef([]);
-  const [, forceUpdate] = useState();
-
-  // useEffect(() => {
-  //   console.log("got time intervals", timeIntervals);
-  // }, [timeIntervals]);
+  const [timeIntervals, setTimeIntervals] = useState([]);
 
   useEffect(() => {
-    console.log("got time intervals", timeIntervalsRef.current);
-  }, [timeIntervalsRef.current]);
+    console.log("got time intervals", timeIntervals);
+  }, [timeIntervals]);
 
   const colors = [
     "red",
@@ -84,7 +79,7 @@ export default function Home() {
           <h2 className="text-xl font-bold-md text-center text-primary">
             Instructions
           </h2>
-          <ul className="list-disc p-2 text-primary pl-6">
+          <ul className="list-disc p-2 text-primary pl-4">
             <li>
               <span className="font-bold">Click</span> to add an event and enter
               drawing mode.
@@ -94,16 +89,15 @@ export default function Home() {
               mode.
             </li>
             <li>
-              <span className="font-bold">Drag</span> an event to move it
-              (cannot be in drawing mode).
+              <span className="font-bold">Drag</span> an event to move it.
             </li>
             <li>
               <span className="font-bold">Click</span> on a worldline{"'"}s
-              event to add more events (cannot be in drawing mode).
+              event to add more events.
             </li>
             <li>
               <span className="font-bold">Hover</span> on an event to show its
-              lightcone (cannot be in drawing mode).
+              lightcone.
             </li>
             <li>
               Press <span className="font-bold">z</span> to undo last event.
@@ -127,9 +121,9 @@ export default function Home() {
           }}
         >
           <Canvas
-            timeIntervalsRef={timeIntervalsRef}
+            timeIntervalsState={timeIntervals}
+            setTimeIntervalsState={setTimeIntervals}
             getColor={getColor}
-            forceUpdate={forceUpdate}
           />
         </motion.div>
         <motion.div
@@ -147,7 +141,7 @@ export default function Home() {
           <h2 className="text-xl font-bold-md text-center text-primary">
             Time Intervals
           </h2>
-          <ul className="list-disc p-2 text-primary pl-6"></ul>
+          <ul className="list-disc p-2 text-primary pl-4"></ul>
         </motion.div>
       </div>
     </main>
