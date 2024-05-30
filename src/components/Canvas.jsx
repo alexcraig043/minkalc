@@ -489,6 +489,8 @@ export default function Canvas({
       }
 
       p5.pop();
+    } else {
+      avoidLineIndices = null;
     }
   }
 
