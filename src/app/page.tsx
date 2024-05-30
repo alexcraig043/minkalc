@@ -10,7 +10,9 @@ export default function Home() {
         Minkowski Spacetime Calculator ⌛
       </h1>
       <div className="flex flex-row gap-2 items-center">
-        <p className="text-center text-primary text-lg">Made by Alex Craig</p>
+        <p className="text-center text-primary text-lg">
+          Made by Alex Craig {"'"}25
+        </p>
         <Link href="https://github.com/alexcraig043/minkalc" target="_blank">
           <Image src="/github-mark.png" alt="Github" width={24} height={24} />
         </Link>

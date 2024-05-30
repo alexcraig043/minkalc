@@ -17,7 +17,11 @@ export default function Canvas() {
     let currentPathIndex = null;
     let draggingIndex = null;
     let hasDragged = false;
-    let shouldDrawLightCones = false;
+    let shouldDrawLightCones = true;
+    let shouldDrawHyperPlanes = true;
+    let shouldPulseHyperPlanes = true;
+    let pulseHyperPlanesY = canvasSize;
+    const pulseDelta = 1;
 
     const colors = [
       "red",
@@ -54,33 +58,54 @@ export default function Canvas() {
       }
 
       addPoint(pos) {
-        // Make sure this pos is not the same as the last point
-        const lastPoint = this.events[this.events.length - 1];
-        if (lastPoint.x === pos.x && lastPoint.y === pos.y) {
-          return;
-        }
-
-        this.events.push({ x: pos.x, y: pos.y });
-      }
-
-      dragPoint(pos, index) {
-        // If this isn't the first point, make sure this pos is not the same as the last or next point
-        if (index > 0) {
-          const lastPoint = this.events[index - 1];
-          if (lastPoint.x === pos.x && lastPoint.y === pos.y) {
+        // Make sure we are not adding a point on top of another point
+        for (let i = 0; i < this.events.length; i++) {
+          const testPoint = this.events[i];
+          if (testPoint.x == pos.x && testPoint.y == pos.y) {
             return;
           }
         }
 
-        // If this isn't the last point, make sure the next point isn't the same
+        this.events.push({ x: pos.x, y: pos.y });
+
+        // Reorder events in descending order of y
+        this.events.sort((a, b) => b.y - a.y);
+      }
+
+      dragEvent(pos, index) {
+        // If this isn't the first event, make sure this pos is not the same as the last or next event
+        if (index > 0) {
+          const lastEvent = this.events[index - 1];
+          if (lastEvent.x === pos.x && lastEvent.y === pos.y) {
+            return index;
+          }
+        }
+
+        // If this isn't the last event, make sure the next event isn't the same
         if (index < this.events.length - 1) {
-          const nextPoint = this.events[index + 1];
-          if (nextPoint.x === pos.x && nextPoint.y === pos.y) {
-            return;
+          const nextEvent = this.events[index + 1];
+          if (nextEvent.x === pos.x && nextEvent.y === pos.y) {
+            return index;
+          }
+        }
+
+        // Make sure we are not dragging on top of another event
+        for (let i = 0; i < this.events.length; i++) {
+          const testEvent = this.events[i];
+          if (i != index && testEvent.x == pos.x && testEvent.y == pos.y) {
+            return index;
           }
         }
 
         this.events[index] = { x: pos.x, y: pos.y };
+
+        // Reorder events in descending order of y
+        this.events.sort((a, b) => b.y - a.y);
+
+        // Return the new index of the dragged event
+        return this.events.findIndex(
+          (event) => event.x === pos.x && event.y === pos.y
+        );
       }
 
       draw(p5) {
@@ -91,15 +116,15 @@ export default function Canvas() {
 
         for (let i = 0; i < this.events.length; i++) {
           p5.noStroke();
-          const point = this.events[i];
-          p5.ellipse(point.x, point.y, circleDiameter);
+          const event = this.events[i];
+          p5.ellipse(event.x, event.y, circleDiameter);
 
           if (i > 0 && i < this.events.length) {
             p5.stroke(this.color);
             p5.strokeWeight(3);
 
-            const prevPoint = this.events[i - 1];
-            p5.line(prevPoint.x, prevPoint.y, point.x, point.y);
+            const prevEvent = this.events[i - 1];
+            p5.line(prevEvent.x, prevEvent.y, event.x, event.y);
           }
         }
 
@@ -107,62 +132,22 @@ export default function Canvas() {
       }
 
       drawHyperPlanes(p5) {
+        if (this.events.length < 2) {
+          return;
+        }
+
         p5.push();
         p5.translate(padding, padding);
         p5.angleMode(p5.DEGREES);
 
         for (let i = 0; i < this.events.length; i++) {
-          if (this.events.length < 2) {
-            break;
-          }
+          const [event1, event2] = this.getHyperPlaneEvents(i);
 
-          let event1 = this.events[i];
-          let event2 = this.events[i - 1];
-
-          if (i === 0) {
-            event2 = this.events[i + 1];
-          }
-
-          if (!event2) {
+          if (!event1 || !event2) {
             continue;
           }
 
-          let dx = event2.x - event1.x;
-          let dy = event2.y - event1.y;
-
-          if (Math.abs(dx) > Math.abs(dy)) {
-            // If traveling faster the speed of light
-            if (i < this.events.length - 1) {
-              // If not the last event, then check the next event
-              event2 = this.events[i + 1];
-
-              dx = event2.x - event1.x;
-              dy = event2.y - event1.y;
-
-              if (Math.abs(dx) > Math.abs(dy)) {
-                continue;
-              }
-            } else {
-              continue;
-            }
-          }
-
-          const angle = p5.degrees(Math.atan2(dy, dx));
-
-          let bisectorAngle = null;
-
-          if (angle <= 0 && angle > -90) {
-            bisectorAngle = -45;
-          } else if (angle <= -90 && angle > -180) {
-            bisectorAngle = -135;
-          } else if (angle >= 0 && angle < 90) {
-            bisectorAngle = 45;
-          } else if (angle >= 90 && angle < 180) {
-            bisectorAngle = 135;
-          }
-
-          // Calculate the bisected angle with 45-degree line
-          const bisectedAngle = angle - (angle - bisectorAngle) * 2;
+          const bisectedAngle = this.getHyperPlaneAngle(event1, event2);
 
           p5.push();
           p5.translate(event1.x, event1.y);
@@ -176,8 +161,130 @@ export default function Canvas() {
           p5.line(0, 0, gridSize, 0);
           p5.pop();
         }
+        p5.pop();
+      }
+
+      pulseHyperPlane(p5, y) {
+        if (this.events.length < 2) {
+          return;
+        }
+
+        let eventIndex = null;
+
+        for (let i = 0; i < this.events.length; i++) {
+          const event = this.events[i];
+
+          if (event.y > y) {
+            eventIndex = i;
+          }
+        }
+
+        if (eventIndex === null) {
+          return;
+        }
+
+        const [event1, event2] = this.getHyperPlaneEvents(eventIndex, true);
+
+        if (!event1 || !event2) {
+          return;
+        }
+
+        p5.push();
+        p5.translate(padding, padding);
+        p5.angleMode(p5.DEGREES);
+
+        const intersectX =
+          event2.x +
+          ((y - event2.y) * (event1.x - event2.x)) / (event1.y - event2.y);
+
+        const intersectEvent = { x: intersectX, y: y };
+
+        const bisectedAngle = this.getHyperPlaneAngle(intersectEvent, event2);
+
+        p5.push();
+        p5.translate(intersectEvent.x, intersectEvent.y);
+        p5.stroke(this.color);
+        p5.strokeWeight(3);
+        p5.drawingContext.setLineDash([5, 15]);
+
+        p5.rotate(bisectedAngle);
+        p5.line(0, 0, gridSize, 0);
+        p5.rotate(180);
+        p5.line(0, 0, gridSize, 0);
+
+        // Draw a transparent circle
+        p5.fill(this.color);
+        p5.noStroke();
+        p5.ellipse(0, 0, circleDiameter);
 
         p5.pop();
+
+        p5.pop();
+      }
+
+      getHyperPlaneEvents(i, forPulse = false) {
+        let event1 = this.events[i];
+        let event2 = this.events[i - 1];
+
+        if (i === 0) {
+          event2 = this.events[i + 1];
+        }
+
+        if (forPulse) {
+          event2 = this.events[i + 1];
+
+          if (i === this.events.length - 1) {
+            return [null, null];
+          }
+        }
+
+        if (!event2) {
+          return [null, null];
+        }
+
+        let dx = event2.x - event1.x;
+        let dy = event2.y - event1.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // If traveling faster the speed of light
+          if (i < this.events.length - 1) {
+            // If not the last event, then check the next event
+            event2 = this.events[i + 1];
+
+            dx = event2.x - event1.x;
+            dy = event2.y - event1.y;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+              return [null, null];
+            }
+          } else {
+            return [null, null];
+          }
+        }
+
+        return [event1, event2];
+      }
+
+      getHyperPlaneAngle(event1, event2) {
+        const dy = event2.y - event1.y;
+        const dx = event2.x - event1.x;
+
+        const angle = p5.degrees(Math.atan2(dy, dx));
+
+        let bisectorAngle = null;
+
+        if (angle <= 0 && angle > -90) {
+          bisectorAngle = -45;
+        } else if (angle <= -90 && angle > -180) {
+          bisectorAngle = -135;
+        } else if (angle >= 0 && angle < 90) {
+          bisectorAngle = 45;
+        } else if (angle >= 90 && angle < 180) {
+          bisectorAngle = 135;
+        }
+
+        // Calculate the bisected angle with 45-degree line
+        return angle - (angle - bisectorAngle) * 2;
       }
     }
 
@@ -396,8 +503,16 @@ export default function Canvas() {
       p5.pop();
     }
 
-    function handleLightCones(p5) {
-      const mousePos = getMouseInsideGrid(p5);
+    function pulseHyperPlanes(p5) {
+      pulseHyperPlanesY -= pulseDelta;
+
+      if (pulseHyperPlanesY < 0) {
+        pulseHyperPlanesY = gridSize;
+      }
+
+      paths.forEach((path) => {
+        path.pulseHyperPlane(p5, pulseHyperPlanesY);
+      });
     }
 
     function drawPaths(p5) {
@@ -478,7 +593,10 @@ export default function Canvas() {
           draggingEvent.y !== nearestGridPoint.y
         ) {
           // If draggingEvent !== nearestGridPoint, then drag the event
-          draggingPath.dragPoint(nearestGridPoint, draggingIndex.eventIndex);
+          draggingIndex.eventIndex = draggingPath.dragEvent(
+            nearestGridPoint,
+            draggingIndex.eventIndex
+          );
           hasDragged = true;
         }
       }
@@ -516,10 +634,14 @@ export default function Canvas() {
     p5.draw = () => {
       p5.clear();
       drawGrid(p5);
+      if (shouldDrawHyperPlanes) {
+        drawHyperPlanes(p5);
+      }
+      if (shouldPulseHyperPlanes) {
+        pulseHyperPlanes(p5);
+      }
       drawPaths(p5);
-      drawHyperPlanes(p5);
       drawHover(p5);
-      handleLightCones(p5);
     };
 
     p5.mousePressed = () => {
