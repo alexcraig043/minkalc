@@ -5,10 +5,19 @@ import Canvas from "@/components/Canvas";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [timeIntervals, setTimeIntervals] = useState([]);
+  const timeIntervalsRef = useRef([]);
+  const [, forceUpdate] = useState();
+
+  // useEffect(() => {
+  //   console.log("got time intervals", timeIntervals);
+  // }, [timeIntervals]);
+
+  useEffect(() => {
+    console.log("got time intervals", timeIntervalsRef.current);
+  }, [timeIntervalsRef.current]);
 
   const colors = [
     "red",
@@ -89,8 +98,8 @@ export default function Home() {
               (cannot be in drawing mode).
             </li>
             <li>
-              <span className="font-bold">Click</span> on the last event of a
-              worldline to add more events (cannot be in drawing mode).
+              <span className="font-bold">Click</span> on a worldline{"'"}s
+              event to add more events (cannot be in drawing mode).
             </li>
             <li>
               <span className="font-bold">Hover</span> on an event to show its
@@ -117,7 +126,11 @@ export default function Home() {
             delay: 0.5,
           }}
         >
-          <Canvas setTimeIntervals={setTimeIntervals} getColor={getColor} />
+          <Canvas
+            timeIntervalsRef={timeIntervalsRef}
+            getColor={getColor}
+            forceUpdate={forceUpdate}
+          />
         </motion.div>
         <motion.div
           className="flex flex-col flex-1 items-start h-full"

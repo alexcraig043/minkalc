@@ -2,7 +2,7 @@
 
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 
-export default function Canvas({ setTimeIntervals, getColor }) {
+export default function Canvas({ timeIntervalsRef, getColor, forceUpdate }) {
   function sketch(p5) {
     const circleDiameter = 15;
     const numGridLines = 24;
@@ -14,6 +14,7 @@ export default function Canvas({ setTimeIntervals, getColor }) {
     const horizontalGridSpacing = gridSize / numGridLines;
 
     let paths = [];
+    let avoidLineIndices = null;
     let currentPathIndex = null;
     let draggingIndex = null;
     let hasDragged = false;
@@ -127,6 +128,16 @@ export default function Canvas({ setTimeIntervals, getColor }) {
           p5.ellipse(event.x, event.y, circleDiameter);
 
           if (i > 0 && i < this.events.length) {
+            const thisPathIndex = paths.findIndex((path) => path === this);
+
+            if (
+              avoidLineIndices !== null &&
+              thisPathIndex === avoidLineIndices?.[0] &&
+              i === avoidLineIndices?.[1]
+            ) {
+              continue;
+            }
+
             p5.stroke(this.color);
             p5.strokeWeight(3);
 
@@ -336,7 +347,7 @@ export default function Canvas({ setTimeIntervals, getColor }) {
       return null;
     }
 
-    function getClickedOnLastEvent(p5, gridPoint) {
+    function getClickedOnPath(p5, gridPoint) {
       if (currentPathIndex !== null) {
         return null;
       }
@@ -344,9 +355,12 @@ export default function Canvas({ setTimeIntervals, getColor }) {
       for (let i = paths.length - 1; i >= 0; i--) {
         const path = paths[i];
 
-        const lastPoint = path.events[path.events.length - 1];
-        if (lastPoint.x === gridPoint.x && lastPoint.y === gridPoint.y) {
-          return i;
+        for (let j = 0; j < path.events.length; j++) {
+          const event = path.events[j];
+
+          if (event.x === gridPoint.x && event.y === gridPoint.y) {
+            return i;
+          }
         }
       }
 
@@ -429,17 +443,64 @@ export default function Canvas({ setTimeIntervals, getColor }) {
         if (currentPathIndex !== null) {
           const currentPath = paths[currentPathIndex];
 
-          if (currentPath.events.length > 0) {
-            const lastPoint = currentPath.events[currentPath.events.length - 1];
-            p5.stroke(color);
-            p5.strokeWeight(3);
-            p5.line(
-              lastPoint.x,
-              lastPoint.y,
-              nearestGridPoint.x,
-              nearestGridPoint.y
-            );
+          if (currentPath.events.length < 1) {
+            p5.pop();
+            return;
           }
+
+          function drawLineToMouse(event1, event2 = null) {
+            if (event2 === null) {
+              p5.stroke(color);
+              p5.strokeWeight(3);
+              p5.line(
+                event1.x,
+                event1.y,
+                nearestGridPoint.x,
+                nearestGridPoint.y
+              );
+            } else {
+              p5.stroke(color);
+              p5.strokeWeight(3);
+              p5.line(
+                event1.x,
+                event1.y,
+                nearestGridPoint.x,
+                nearestGridPoint.y
+              );
+              p5.line(
+                event2.x,
+                event2.y,
+                nearestGridPoint.x,
+                nearestGridPoint.y
+              );
+            }
+          }
+
+          for (let i = 0; i < currentPath.events.length; i++) {
+            if (i === 0 && nearestGridPoint.y >= currentPath.events[i].y) {
+              drawLineToMouse(currentPath.events[i]);
+              avoidLineIndices = null;
+              break;
+            } else if (
+              i === currentPath.events.length - 1 &&
+              nearestGridPoint.y <= currentPath.events[i].y
+            ) {
+              drawLineToMouse(currentPath.events[i]);
+              avoidLineIndices = null;
+              break;
+            }
+
+            if (
+              nearestGridPoint.y <= currentPath.events[i].y &&
+              nearestGridPoint.y > currentPath.events[i + 1].y
+            ) {
+              drawLineToMouse(currentPath.events[i], currentPath.events[i + 1]);
+              avoidLineIndices = [currentPathIndex, i + 1];
+              break;
+            }
+          }
+        } else {
+          avoidLineIndices = null;
         }
 
         p5.pop();
@@ -520,8 +581,14 @@ export default function Canvas({ setTimeIntervals, getColor }) {
 
     function calculateTimeIntervals() {
       paths.forEach((path) => path.calculateTimeIntervals());
-      // setTimeIntervals(paths.map((path) => path.timeIntervals));
-      console.log(paths.map((path) => path.timeIntervals));
+      const newTimeIntervals = paths.map((path) => path.timeIntervals);
+      if (
+        JSON.stringify(newTimeIntervals) !==
+        JSON.stringify(timeIntervalsRef.current)
+      ) {
+        timeIntervalsRef.current = newTimeIntervals;
+        // forceUpdate((prev) => !prev);
+      }
     }
 
     function drawHyperPlanes(p5) {
@@ -571,11 +638,11 @@ export default function Canvas({ setTimeIntervals, getColor }) {
       if (mousePos && !hasDragged && currentPathIndex === null) {
         // If mouse released without dragging and not currently drawing a path
         const nearestGridPoint = getNearestGridPoint(p5, mousePos);
-        const clickedOnLastEvent = getClickedOnLastEvent(p5, nearestGridPoint);
+        const clickedOnPath = getClickedOnPath(p5, nearestGridPoint);
 
-        if (clickedOnLastEvent !== null) {
+        if (clickedOnPath !== null) {
           // If clicked on the last event of a path, then set the current path to that path
-          currentPathIndex = clickedOnLastEvent;
+          currentPathIndex = clickedOnPath;
         }
       }
 
