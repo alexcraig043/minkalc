@@ -159,7 +159,7 @@ export default function Home() {
           }}
         >
           <h2 className="text-xl font-bold-md text-center text-primary">
-            Time Intervals 🕓
+            Time Intervals ⏱️
           </h2>
           <ul className="list-disc p-2 text-primary">
             {timeIntervals.map((pathIntervals, index) => {
