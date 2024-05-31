@@ -51,7 +51,7 @@ export default function Home() {
   }
 
   return (
-    <main className="container flex h-screen flex-col items-center p-8 gap-2">
+    <main className="container flex h-screen flex-col items-center p-8 gap-8 xl:gap-2">
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-3xl font-bold-md text-center text-primary">
           Minkowski Spacetime Calculator ⏳
@@ -65,9 +65,9 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      <div className="flex flex-col xl:flex-row items-center justify-between w-full gap-2">
+      <div className="flex flex-col xl:flex-row items-center justify-between w-full gap-8 xl:gap-2">
         <motion.div
-          className="flex flex-col flex-1 items-start w-full h-full"
+          className="flex flex-col flex-1 items-start xl:w-full h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{
             opacity: [0, 1],
@@ -98,7 +98,7 @@ export default function Home() {
               event to add more events.
             </li>
             <li>
-              <span className="font-bold">Hover</span> on an event to show its
+              <span className="font-bold">Hover</span> over an event to see its
               lightcone.
             </li>
             <li>
@@ -147,7 +147,7 @@ export default function Home() {
           </div>
         </motion.div>
         <motion.div
-          className="flex flex-col flex-1 items-start w-full h-full"
+          className="flex flex-col flex-1 items-start xl:w-full h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{
             opacity: [0, 1],
@@ -198,7 +198,7 @@ export default function Home() {
                             </span>
                           );
                         })}
-                        {totalTime !== null && (
+                        {totalTime !== null && pathIntervals.length > 1 && (
                           <span>
                             {" "}
                             = {Math.round(totalTime * 10) / 10} years
