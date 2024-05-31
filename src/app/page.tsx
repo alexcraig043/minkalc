@@ -5,15 +5,9 @@ import Canvas from "@/components/Canvas";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [timeIntervals, setTimeIntervals] = useState([]);
-
-  useEffect(() => {
-    console.log("got time intervals", timeIntervals);
-  }, [timeIntervals]);
-
   const colors = [
     "red",
     "blue",
@@ -120,13 +114,9 @@ export default function Home() {
             delay: 0.5,
           }}
         >
-          <Canvas
-            timeIntervalsState={timeIntervals}
-            setTimeIntervalsState={setTimeIntervals}
-            getColor={getColor}
-          />
+          <Canvas getColor={getColor} />
         </motion.div>
-        <motion.div
+        {/* <motion.div
           className="flex flex-col flex-1 items-start h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{
@@ -141,8 +131,38 @@ export default function Home() {
           <h2 className="text-xl font-bold-md text-center text-primary">
             Time Intervals
           </h2>
-          <ul className="list-disc p-2 text-primary pl-4"></ul>
-        </motion.div>
+          <ul className="list-disc p-2 text-primary pl-4">
+            {timeIntervals.map((pathIntervals, index) => {
+              return (
+                <li key={index} className="flex flex-row items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{
+                      backgroundColor: getColor(index),
+                    }}
+                  />
+                  {pathIntervals.map((interval, i) => {
+                    let roundedInterval;
+
+                    if (interval === null) {
+                      roundedInterval = "NA";
+                    } else {
+                      roundedInterval =
+                        (Math.round(interval * 100) / 100).toString() +
+                        " years";
+                    }
+
+                    return (
+                      <span key={i} className="text-primary">
+                        {roundedInterval} {i < pathIntervals.length - 1 && "→"}
+                      </span>
+                    );
+                  })}
+                </li>
+              );
+            })}
+          </ul>
+        </motion.div> */}
       </div>
     </main>
   );

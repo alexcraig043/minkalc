@@ -2,11 +2,7 @@
 
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 
-export default function Canvas({
-  timeIntervalsState,
-  setTimeIntervalsState,
-  getColor,
-}) {
+export default function Canvas({ getColor }) {
   const circleDiameter = 15;
   const numGridLines = 24;
   const padding = circleDiameter / 2;
@@ -36,6 +32,10 @@ export default function Canvas({
     }
 
     calculateTimeIntervals(p5) {
+      if (this.events.length < 2) {
+        return;
+      }
+
       this.timeIntervals = [];
 
       for (let i = 0; i < this.events.length - 1; i++) {
@@ -177,9 +177,9 @@ export default function Canvas({
         p5.drawingContext.setLineDash([5, 15]);
 
         p5.rotate(bisectedAngle);
-        p5.line(0, 0, gridSize, 0);
+        p5.line(0, 0, 2 * gridSize, 0);
         p5.rotate(180);
-        p5.line(0, 0, gridSize, 0);
+        p5.line(0, 0, 2 * gridSize, 0);
         p5.pop();
       }
       p5.pop();
@@ -229,9 +229,9 @@ export default function Canvas({
       p5.drawingContext.setLineDash([5, 15]);
 
       p5.rotate(bisectedAngle);
-      p5.line(0, 0, gridSize, 0);
+      p5.line(0, 0, 2 * gridSize, 0);
       p5.rotate(180);
-      p5.line(0, 0, gridSize, 0);
+      p5.line(0, 0, 2 * gridSize, 0);
 
       // Draw a transparent circle
       p5.fill(this.color);
@@ -465,6 +465,7 @@ export default function Canvas({
           if (i === 0 && nearestGridPoint.y >= currentPath.events[i].y) {
             drawLineToMouse(currentPath.events[i]);
             avoidLineIndices = null;
+
             break;
           } else if (
             i === currentPath.events.length - 1 &&
@@ -472,6 +473,7 @@ export default function Canvas({
           ) {
             drawLineToMouse(currentPath.events[i]);
             avoidLineIndices = null;
+
             break;
           }
 
@@ -481,6 +483,7 @@ export default function Canvas({
           ) {
             drawLineToMouse(currentPath.events[i], currentPath.events[i + 1]);
             avoidLineIndices = [currentPathIndex, i + 1];
+
             break;
           }
         }
@@ -576,14 +579,8 @@ export default function Canvas({
     paths.forEach((path) => path.draw(p5));
   }
 
-  function calculateTimeIntervals() {
+  function calculateTimeIntervalsAllPaths() {
     paths.forEach((path) => path.calculateTimeIntervals());
-    const newTimeIntervals = paths.map((path) => path.timeIntervals);
-    if (
-      JSON.stringify(newTimeIntervals) !== JSON.stringify(timeIntervalsState)
-    ) {
-      // setTimeIntervalsState(newTimeIntervals);
-    }
   }
 
   function drawHyperPlanes(p5) {
@@ -622,9 +619,6 @@ export default function Canvas({
         }
       }
     }
-    // else {
-    //   currentPathIndex = null;
-    // }
   }
 
   function handleMouseReleased(p5) {
@@ -692,9 +686,67 @@ export default function Canvas({
     }
   }
 
+  function drawTimeIntervals(p5) {
+    p5.push();
+    p5.translate(2 * padding + gridSize, padding);
+
+    // Write a title called "Time Intervals"
+    p5.textSize(20);
+    p5.textAlign(p5.LEFT, p5.TOP);
+    // Make font thin
+    p5.textStyle(p5.NORMAL);
+    p5.noStroke();
+    p5.text("Time Intervals", 0, 0);
+
+    // Write the time intervals
+    p5.textSize(16);
+    p5.textAlign(p5.LEFT, p5.TOP);
+
+    const intervalPadding = 30;
+
+    for (let i = 0; i < paths.length; i++) {
+      p5.translate(0, intervalPadding);
+      p5.push();
+
+      const path = paths[i];
+
+      if (path.timeIntervals.length === 0) {
+        console.log("No time intervals");
+        continue;
+      }
+
+      p5.fill(path.color);
+      p5.ellipse(circleDiameter / 2, circleDiameter / 2, circleDiameter);
+      p5.fill("black");
+      p5.translate(circleDiameter * 1.5, 0);
+
+      path.timeIntervals.forEach((timeInterval, j) => {
+        let formattedTimeInterval;
+
+        if (timeInterval === null) {
+          formattedTimeInterval = "NA";
+        } else {
+          formattedTimeInterval =
+            (Math.round(timeInterval * 100) / 100).toString() + " years";
+        }
+
+        if (j < path.timeIntervals.length - 1) {
+          formattedTimeInterval += " → ";
+        }
+
+        const textWidth = p5.textWidth(formattedTimeInterval);
+
+        p5.text(formattedTimeInterval, 0, 0);
+        p5.translate(textWidth, 0);
+      });
+
+      p5.pop();
+    }
+  }
+
   function sketch(p5) {
     p5.setup = () => {
-      p5.createCanvas(canvasSize, canvasSize);
+      p5.createCanvas(canvasSize * 1.75, canvasSize);
 
       drawGrid(p5);
     };
@@ -708,9 +760,10 @@ export default function Canvas({
       if (shouldPulseHyperPlanes) {
         pulseHyperPlanes(p5);
       }
-      calculateTimeIntervals();
+      calculateTimeIntervalsAllPaths();
       drawPaths(p5);
       drawHover(p5);
+      drawTimeIntervals(p5);
     };
 
     p5.mousePressed = () => {
