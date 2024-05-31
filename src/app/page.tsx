@@ -54,7 +54,7 @@ export default function Home() {
     <main className="container flex h-screen flex-col items-center p-8 gap-2">
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-3xl font-bold-md text-center text-primary">
-          Minkowski Spacetime Calculator ⌛
+          Minkowski Spacetime Calculator ⏳
         </h1>
         <div className="flex flex-row gap-2 items-center">
           <p className="text-center text-primary text-lg">
@@ -79,7 +79,7 @@ export default function Home() {
           }}
         >
           <h2 className="text-xl font-bold-md text-center text-primary">
-            Instructions
+            Instructions 📚
           </h2>
           <ul className="list-disc p-2 text-primary pl-4">
             <li>
@@ -159,7 +159,7 @@ export default function Home() {
           }}
         >
           <h2 className="text-xl font-bold-md text-center text-primary">
-            Time Intervals
+            Time Intervals 🕓
           </h2>
           <ul className="list-disc p-2 text-primary">
             {timeIntervals.map((pathIntervals, index) => {
