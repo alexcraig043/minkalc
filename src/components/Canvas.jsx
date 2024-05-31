@@ -590,7 +590,7 @@ export default function Canvas({
       p5.translate(padding, padding);
 
       p5.stroke(0, 0, 0);
-      p5.strokeWeight(1);
+      p5.strokeWeight(2);
       p5.drawingContext.setLineDash([5, 15]);
       p5.line(0, pulseHyperPlanesY, gridSize, pulseHyperPlanesY);
 
