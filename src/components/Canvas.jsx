@@ -797,6 +797,7 @@ export default function Canvas({
 
     sketch: (p5) => {
       p5.setup = () => {
+        p5.pixelDensity();
         p5.createCanvas(canvasSize, canvasSize);
 
         sketchState.drawGrid(p5);
