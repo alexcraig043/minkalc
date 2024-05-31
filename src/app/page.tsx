@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
+  const [timeIntervals, setTimeIntervals] = useState([]);
+
   const colors = [
     "red",
     "blue",
@@ -114,9 +116,12 @@ export default function Home() {
             delay: 0.5,
           }}
         >
-          <Canvas getColor={getColor} />
+          <Canvas
+            getColor={getColor}
+            setTimeIntervalsState={setTimeIntervals}
+          />
         </motion.div>
-        {/* <motion.div
+        <motion.div
           className="flex flex-col flex-1 items-start h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{
@@ -133,36 +138,48 @@ export default function Home() {
           </h2>
           <ul className="list-disc p-2 text-primary pl-4">
             {timeIntervals.map((pathIntervals, index) => {
+              let totalTime = null;
+
               return (
-                <li key={index} className="flex flex-row items-center gap-2">
+                <li key={index} className="flex flex-row items-start gap-2">
                   <div
-                    className="w-4 h-4 rounded-full"
+                    className="w-4 h-4 rounded-full shrink-0 mt-1"
                     style={{
                       backgroundColor: getColor(index),
                     }}
                   />
-                  {pathIntervals.map((interval, i) => {
-                    let roundedInterval;
+                  <p className="text-primary">
+                    {pathIntervals.map((interval, i) => {
+                      let roundedInterval;
 
-                    if (interval === null) {
-                      roundedInterval = "NA";
-                    } else {
-                      roundedInterval =
-                        (Math.round(interval * 100) / 100).toString() +
-                        " years";
-                    }
+                      if (interval === null) {
+                        roundedInterval = "NA";
+                      } else {
+                        totalTime += interval;
+                        roundedInterval =
+                          (Math.round(interval * 100) / 100).toString() +
+                          " years";
+                      }
 
-                    return (
-                      <span key={i} className="text-primary">
-                        {roundedInterval} {i < pathIntervals.length - 1 && "→"}
+                      return (
+                        <span key={i}>
+                          {roundedInterval}
+                          {i < pathIntervals.length - 1 && " → "}
+                        </span>
+                      );
+                    })}
+                    {totalTime !== null && (
+                      <span className="font-semibold">
+                        {" "}
+                        = {Math.round(totalTime * 100) / 100} years
                       </span>
-                    );
-                  })}
+                    )}
+                  </p>
                 </li>
               );
             })}
           </ul>
-        </motion.div> */}
+        </motion.div>
       </div>
     </main>
   );
