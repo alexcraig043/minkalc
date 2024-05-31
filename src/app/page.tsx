@@ -64,9 +64,9 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      <div className="flex flex-col md:flex-row items-center justify-between w-full gap-2">
+      <div className="flex flex-col xl:flex-row items-center justify-between w-full gap-2">
         <motion.div
-          className="flex flex-col flex-1 items-start h-full"
+          className="flex flex-col flex-1 items-start w-full h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{
             opacity: [0, 1],
@@ -134,7 +134,7 @@ export default function Home() {
           </div>
         </motion.div>
         <motion.div
-          className="flex flex-col flex-1 items-start h-full"
+          className="flex flex-col flex-1 items-start w-full h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{
             opacity: [0, 1],
