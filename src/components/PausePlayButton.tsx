@@ -6,7 +6,7 @@ export default function PausePlayButton({ paused, setPaused }) {
   return (
     <Button
       onClick={() => setPaused(!paused)}
-      className="bg-primary text-white rounded-md p-2 w-14"
+      className="bg-primary text-white rounded-md h-8 w-14"
     >
       {paused ? "Play" : "Pause"}
     </Button>
