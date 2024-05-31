@@ -28,6 +28,8 @@ export default function Canvas({
   let hasDragged = false;
   let shouldDrawLightCones = true;
   let pulseY = canvasSize;
+  let mostRecentEventIndex = null;
+
   const shouldDrawHyperPlanes = useRef(shouldDrawHyperPlanesProp);
   const shouldPulse = useRef(shouldPulseProp);
   const shouldShowPulse = useRef(showShowPulseProp);
@@ -93,9 +95,18 @@ export default function Canvas({
       }
 
       this.events.push({ x: pos.x, y: pos.y });
-
       // Reorder events in descending order of y
       this.events.sort((a, b) => b.y - a.y);
+
+      // Get the new event index where event.x = pos.x and event.y = pos.y
+      const thisEventIndex = this.events.findIndex(
+        (event) => event.x === pos.x && event.y === pos.y
+      );
+      const thisPathIndex = paths.findIndex((path) => path === this);
+      mostRecentEventIndex = {
+        pathIndex: thisPathIndex,
+        eventIndex: thisEventIndex,
+      };
     }
 
     dragEvent(pos, index) {
@@ -324,7 +335,7 @@ export default function Canvas({
     }
   }
 
-  const [sketchState, setSketchState] = useState({
+  const [sketchState] = useState({
     shouldDrawHyperPlanes: shouldDrawHyperPlanesProp,
     shouldPulse: shouldPulseProp,
 
@@ -779,17 +790,36 @@ export default function Canvas({
         paths = [];
         currentPathIndex = null;
       } else if (key === "z") {
-        // Remove the last event of the last path
-        // If the path is now empty, remove it
-        if (paths.length > 0) {
-          const lastPath = paths[paths.length - 1];
-          lastPath.events.pop();
+        if (mostRecentEventIndex !== null) {
+          const pathIndex = mostRecentEventIndex.pathIndex;
+          const path = paths[pathIndex];
 
-          if (lastPath.events.length === 0) {
-            currentPathIndex = null;
-            paths.pop();
+          const eventIndex = mostRecentEventIndex.eventIndex;
+
+          // Remove eventIndex event from path
+          path.events.splice(eventIndex, 1);
+
+          // If the path is now empty, remove it
+          if (path.events.length === 0) {
+            paths.splice(pathIndex, 1);
           } else {
-            paths[paths.length - 1] = lastPath;
+            paths[pathIndex] = path;
+          }
+
+          mostRecentEventIndex = null;
+        } else {
+          // Remove the last event of the last path
+          // If the path is now empty, remove it
+          if (paths.length > 0) {
+            const lastPath = paths[paths.length - 1];
+            lastPath.events.pop();
+
+            if (lastPath.events.length === 0) {
+              currentPathIndex = null;
+              paths.pop();
+            } else {
+              paths[paths.length - 1] = lastPath;
+            }
           }
         }
       }
