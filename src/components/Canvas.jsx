@@ -7,6 +7,7 @@ export default function Canvas({ getColor }) {
   const numGridLines = 24;
   const padding = circleDiameter / 2;
   const canvasSize = 600;
+  const canvasWidth = canvasSize * 1.625;
   const gridSize = canvasSize - 2 * padding;
 
   const verticalGridSpacing = gridSize / numGridLines;
@@ -372,7 +373,7 @@ export default function Canvas({ getColor }) {
 
   function drawGrid(p5) {
     // Draw the horizontal grid lines
-
+    p5.push();
     p5.translate(padding, padding);
     p5.strokeWeight(1);
     p5.stroke(0, 0, 0);
@@ -402,8 +403,7 @@ export default function Canvas({ getColor }) {
 
       p5.line(0, y, gridSize, y);
     }
-
-    p5.translate(-padding, -padding);
+    p5.pop();
   }
 
   function drawHover(p5) {
@@ -690,28 +690,36 @@ export default function Canvas({ getColor }) {
     p5.push();
     p5.translate(2 * padding + gridSize, padding);
 
+    p5.rectMode(p5.CORNER);
+    p5.fill("#F1FAEE");
+    p5.noStroke();
+    p5.rect(-padding / 2, -padding, canvasSize, canvasSize);
+
     // Write a title called "Time Intervals"
     p5.textSize(20);
     p5.textAlign(p5.LEFT, p5.TOP);
     // Make font thin
+    p5.fill("black");
     p5.textStyle(p5.NORMAL);
-    p5.noStroke();
     p5.text("Time Intervals", 0, 0);
 
     // Write the time intervals
     p5.textSize(16);
-    p5.textAlign(p5.LEFT, p5.TOP);
 
     const intervalPadding = 30;
+    let numLines = 0;
 
     for (let i = 0; i < paths.length; i++) {
       p5.translate(0, intervalPadding);
+      p5.translate(0, (numLines * intervalPadding) / 2);
+
+      numLines = 0;
+
       p5.push();
 
       const path = paths[i];
 
       if (path.timeIntervals.length === 0) {
-        console.log("No time intervals");
         continue;
       }
 
@@ -720,6 +728,8 @@ export default function Canvas({ getColor }) {
       p5.fill("black");
       p5.translate(circleDiameter * 1.5, 0);
 
+      let horizontalWidth = 0;
+
       path.timeIntervals.forEach((timeInterval, j) => {
         let formattedTimeInterval;
 
@@ -727,7 +737,7 @@ export default function Canvas({ getColor }) {
           formattedTimeInterval = "NA";
         } else {
           formattedTimeInterval =
-            (Math.round(timeInterval * 100) / 100).toString() + " years";
+            (Math.round(timeInterval * 100) / 100).toString() + " yrs";
         }
 
         if (j < path.timeIntervals.length - 1) {
@@ -736,17 +746,34 @@ export default function Canvas({ getColor }) {
 
         const textWidth = p5.textWidth(formattedTimeInterval);
 
+        if (
+          2 * padding +
+            gridSize +
+            2.5 * circleDiameter +
+            horizontalWidth +
+            textWidth >
+          canvasWidth
+        ) {
+          p5.translate(-1 * horizontalWidth, intervalPadding / 2);
+          horizontalWidth = 0;
+          numLines++;
+        } else {
+          horizontalWidth += textWidth;
+        }
+
         p5.text(formattedTimeInterval, 0, 0);
         p5.translate(textWidth, 0);
       });
 
       p5.pop();
     }
+
+    p5.pop();
   }
 
   function sketch(p5) {
     p5.setup = () => {
-      p5.createCanvas(canvasSize * 1.75, canvasSize);
+      p5.createCanvas(canvasWidth, canvasSize);
 
       drawGrid(p5);
     };
