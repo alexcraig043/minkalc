@@ -155,7 +155,10 @@ export default function Home() {
               if (pathIntervals.length > 0) {
                 return (
                   <>
-                    <li key={index} className="flex flex-row items-start gap-2">
+                    <li
+                      key={index}
+                      className="flex flex-row items-start gap-1.5"
+                    >
                       <div
                         className="w-4 h-4 rounded-full shrink-0 mt-1"
                         style={{

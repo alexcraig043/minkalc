@@ -591,6 +591,10 @@ export default function Canvas({
         pulseHyperPlanesY -= pulseDelta;
       }
 
+      if (pulseHyperPlanesY < padding) {
+        pulseHyperPlanesY = gridSize;
+      }
+
       p5.push();
       p5.translate(padding, padding);
 
@@ -600,10 +604,6 @@ export default function Canvas({
       p5.line(0, pulseHyperPlanesY, gridSize, pulseHyperPlanesY);
 
       p5.pop();
-
-      if (pulseHyperPlanesY < 0) {
-        pulseHyperPlanesY = gridSize;
-      }
 
       paths.forEach((path) => {
         path.pulseHyperPlane(p5, pulseHyperPlanesY);
@@ -656,6 +656,11 @@ export default function Canvas({
         for (let j = 0; j < path.events.length - 1; j++) {
           const event = path.events[j];
           const nextEvent = path.events[j + 1];
+
+          // Case 0: The interval is null
+          if (path.timeIntervals[j] === null) {
+            continue;
+          }
 
           // Case 1: The pulse is already above this interval
           if (nextEvent.y > pulseHyperPlanesY) {
