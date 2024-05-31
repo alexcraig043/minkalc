@@ -161,63 +161,67 @@ export default function Home() {
           <h2 className="text-xl font-bold-md text-center text-primary">
             Time Intervals ⏱️
           </h2>
-          <ul className="list-disc p-2 text-primary">
-            {timeIntervals.map((pathIntervals, index) => {
-              let totalTime = null;
+          {timeIntervals.length > 0 ? (
+            <ul className="list-disc p-2 text-primary">
+              {timeIntervals.map((pathIntervals, index) => {
+                let totalTime = null;
 
-              if (pathIntervals.length > 0) {
-                return (
-                  <>
-                    <li
-                      key={index}
-                      className="flex flex-row items-start gap-1.5"
-                    >
-                      <div
-                        className="w-4 h-4 rounded-full shrink-0 mt-1"
-                        style={{
-                          backgroundColor: getColor(index),
-                        }}
-                      />
-                      <p className="text-primary">
-                        {pathIntervals.map((interval, i) => {
-                          let roundedInterval;
+                if (pathIntervals.length > 0) {
+                  return (
+                    <>
+                      <li
+                        key={index}
+                        className="flex flex-row items-start gap-1.5"
+                      >
+                        <div
+                          className="w-4 h-4 rounded-full shrink-0 mt-1"
+                          style={{
+                            backgroundColor: getColor(index),
+                          }}
+                        />
+                        <p className="text-primary">
+                          {pathIntervals.map((interval, i) => {
+                            let roundedInterval;
 
-                          if (interval === null) {
-                            roundedInterval = "NA";
-                          } else {
-                            totalTime += interval;
-                            roundedInterval =
-                              (Math.round(interval * 10) / 10).toString() +
-                              " years";
-                          }
+                            if (interval === null) {
+                              roundedInterval = "NA";
+                            } else {
+                              totalTime += interval;
+                              roundedInterval =
+                                (Math.round(interval * 10) / 10).toString() +
+                                " years";
+                            }
 
-                          return (
-                            <span key={i}>
-                              {roundedInterval}
-                              {i < pathIntervals.length - 1 && " → "}
+                            return (
+                              <span key={i}>
+                                {roundedInterval}
+                                {i < pathIntervals.length - 1 && " → "}
+                              </span>
+                            );
+                          })}
+                          {totalTime !== null && pathIntervals.length > 1 && (
+                            <span>
+                              {" "}
+                              = {Math.round(totalTime * 10) / 10} years
                             </span>
-                          );
-                        })}
-                        {totalTime !== null && pathIntervals.length > 1 && (
-                          <span>
-                            {" "}
-                            = {Math.round(totalTime * 10) / 10} years
-                          </span>
-                        )}
-                      </p>
-                    </li>
-                    <span>
-                      {"Currently: "}
-                      {currentTimes[index] === null
-                        ? "NA"
-                        : Math.round(currentTimes[index] * 10) / 10}{" "}
-                      years
-                    </span>
-                  </>
-                );
-              }
-            })}
-          </ul>
+                          )}
+                        </p>
+                      </li>
+                      <span>
+                        {"Currently: "}
+                        {currentTimes[index] === null
+                          ? "NA"
+                          : Math.round(currentTimes[index] * 10) / 10}{" "}
+                        years
+                      </span>
+                    </>
+                  );
+                }
+              })}
+            </ul>
+          ) : (
+            <p className="text-primary pt-2">Start clicking!</p>
+          )}
         </motion.div>
       </div>
     </main>
