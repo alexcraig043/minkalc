@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 export default function Canvas({
   getColor,
   setTimeIntervalsState,
+  setCurrentTimesState,
   shouldDrawHyperPlanesProp,
   shouldPulseHyperPlanesProp,
 }) {
@@ -585,7 +586,11 @@ export default function Canvas({
       p5.pop();
     },
 
-    drawTimeIndex: (p5) => {
+    pulseHyperPlanes: (p5) => {
+      if (shouldPulseHyperPlanes.current) {
+        pulseHyperPlanesY -= pulseDelta;
+      }
+
       p5.push();
       p5.translate(padding, padding);
 
@@ -595,10 +600,6 @@ export default function Canvas({
       p5.line(0, pulseHyperPlanesY, gridSize, pulseHyperPlanesY);
 
       p5.pop();
-    },
-
-    pulseHyperPlanes: (p5) => {
-      pulseHyperPlanesY -= pulseDelta;
 
       if (pulseHyperPlanesY < 0) {
         pulseHyperPlanesY = gridSize;
@@ -623,6 +624,64 @@ export default function Canvas({
         timeIntervalsMemory = newTimeIntervals;
         setTimeIntervalsState(newTimeIntervals);
       }
+    },
+
+    calculateCurrentTimes: () => {
+      let currentTimes = [];
+
+      for (let i = 0; i < paths.length; i++) {
+        const path = paths[i];
+        let currentTime = null;
+
+        // If the path is empty, return null
+        if (path.events.length < 2) {
+          console.log("Path is empty");
+          currentTimes.push(null);
+          continue;
+        }
+
+        // If the first event is above the pulse hyperplane, return null
+        if (path.events[0].y <= pulseHyperPlanesY) {
+          currentTimes.push(currentTime);
+          continue;
+        }
+
+        // If the last event is below the pulse hyperplane, return null
+        // if (path.events[path.events.length - 1].y >= pulseHyperPlanesY) {
+        //   currentTimes.push(currentTime);
+        //   continue;
+        // }
+
+        // Go through each event
+        for (let j = 0; j < path.events.length - 1; j++) {
+          const event = path.events[j];
+          const nextEvent = path.events[j + 1];
+
+          // Case 1: The pulse is already above this interval
+          if (nextEvent.y > pulseHyperPlanesY) {
+            currentTime += path.timeIntervals[j];
+            continue;
+          }
+
+          // Case 2: The pulse is currently inside this interval
+          if (
+            event.y >= pulseHyperPlanesY &&
+            nextEvent.y <= pulseHyperPlanesY
+          ) {
+            const offsetY = pulseHyperPlanesY - event.y;
+            const ratioY = offsetY / (nextEvent.y - event.y);
+            const interval = path.timeIntervals[j] * ratioY;
+            currentTime += interval;
+
+            continue;
+          }
+        }
+
+        currentTimes.push(currentTime);
+        console.log(currentTimes);
+      }
+
+      setCurrentTimesState(currentTimes);
     },
 
     drawHyperPlanes: (p5) => {
@@ -742,14 +801,14 @@ export default function Canvas({
         p5.clear();
         sketchState.drawGrid(p5);
 
-        sketchState.drawTimeIndex(p5);
         if (shouldDrawHyperPlanes.current) {
           sketchState.drawHyperPlanes(p5);
         }
-        if (shouldPulseHyperPlanes.current) {
-          sketchState.pulseHyperPlanes(p5);
-        }
+        sketchState.pulseHyperPlanes(p5);
         sketchState.calculateTimeIntervalsAllPaths();
+        if (shouldPulseHyperPlanes.current) {
+          sketchState.calculateCurrentTimes();
+        }
         sketchState.drawPaths(p5);
         sketchState.drawHover(p5);
       };

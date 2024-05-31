@@ -11,6 +11,7 @@ import CheckedControl from "@/components/CheckedControl";
 
 export default function Home() {
   const [timeIntervals, setTimeIntervals] = useState([]);
+  const [currentTimes, setCurrentTimes] = useState([]);
   const [paused, setPaused] = useState(false);
   const [checked, setChecked] = useState(true);
 
@@ -123,6 +124,7 @@ export default function Home() {
           <Canvas
             getColor={getColor}
             setTimeIntervalsState={setTimeIntervals}
+            setCurrentTimesState={setCurrentTimes}
             shouldDrawHyperPlanesProp={checked}
             shouldPulseHyperPlanesProp={!paused}
           />
@@ -146,47 +148,58 @@ export default function Home() {
           <h2 className="text-xl font-bold-md text-center text-primary">
             Time Intervals
           </h2>
-          <ul className="list-disc p-2 text-primary pl-4">
+          <ul className="list-disc p-2 text-primary">
             {timeIntervals.map((pathIntervals, index) => {
               let totalTime = null;
 
-              return (
-                <li key={index} className="flex flex-row items-start gap-2">
-                  <div
-                    className="w-4 h-4 rounded-full shrink-0 mt-1"
-                    style={{
-                      backgroundColor: getColor(index),
-                    }}
-                  />
-                  <p className="text-primary">
-                    {pathIntervals.map((interval, i) => {
-                      let roundedInterval;
+              if (pathIntervals.length > 0) {
+                return (
+                  <>
+                    <li key={index} className="flex flex-row items-start gap-2">
+                      <div
+                        className="w-4 h-4 rounded-full shrink-0 mt-1"
+                        style={{
+                          backgroundColor: getColor(index),
+                        }}
+                      />
+                      <p className="text-primary">
+                        {pathIntervals.map((interval, i) => {
+                          let roundedInterval;
 
-                      if (interval === null) {
-                        roundedInterval = "NA";
-                      } else {
-                        totalTime += interval;
-                        roundedInterval =
-                          (Math.round(interval * 100) / 100).toString() +
-                          " years";
-                      }
+                          if (interval === null) {
+                            roundedInterval = "NA";
+                          } else {
+                            totalTime += interval;
+                            roundedInterval =
+                              (Math.round(interval * 10) / 10).toString() +
+                              " years";
+                          }
 
-                      return (
-                        <span key={i}>
-                          {roundedInterval}
-                          {i < pathIntervals.length - 1 && " → "}
-                        </span>
-                      );
-                    })}
-                    {totalTime !== null && (
-                      <span className="font-semibold">
-                        {" "}
-                        = {Math.round(totalTime * 100) / 100} years
-                      </span>
-                    )}
-                  </p>
-                </li>
-              );
+                          return (
+                            <span key={i}>
+                              {roundedInterval}
+                              {i < pathIntervals.length - 1 && " → "}
+                            </span>
+                          );
+                        })}
+                        {totalTime !== null && (
+                          <span>
+                            {" "}
+                            = {Math.round(totalTime * 10) / 10} years
+                          </span>
+                        )}
+                      </p>
+                    </li>
+                    <span>
+                      {"Currently: "}
+                      {currentTimes[index] === null
+                        ? "NA"
+                        : Math.round(currentTimes[index] * 10) / 10}{" "}
+                      years
+                    </span>
+                  </>
+                );
+              }
             })}
           </ul>
         </motion.div>
