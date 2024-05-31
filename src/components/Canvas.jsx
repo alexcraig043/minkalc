@@ -1,9 +1,14 @@
 "use client";
 
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
-export default function Canvas({ getColor, setTimeIntervalsState }) {
+export default function Canvas({
+  getColor,
+  setTimeIntervalsState,
+  shouldDrawHyperPlanesProp,
+  shouldPulseHyperPlanesProp,
+}) {
   const circleDiameter = 15;
   const numGridLines = 24;
   const padding = circleDiameter / 2;
@@ -20,11 +25,15 @@ export default function Canvas({ getColor, setTimeIntervalsState }) {
   let draggingIndex = null;
   let hasDragged = false;
   let shouldDrawLightCones = true;
-  let shouldDrawHyperPlanes = true;
-  let shouldPulseHyperPlanes = true;
   let pulseHyperPlanesY = canvasSize;
+  const shouldDrawHyperPlanes = useRef(shouldDrawHyperPlanesProp);
+  const shouldPulseHyperPlanes = useRef(shouldPulseHyperPlanesProp);
   const pulseDelta = 1;
 
+  useEffect(() => {
+    shouldDrawHyperPlanes.current = shouldDrawHyperPlanesProp;
+    shouldPulseHyperPlanes.current = shouldPulseHyperPlanesProp;
+  }, [shouldDrawHyperPlanesProp, shouldPulseHyperPlanesProp]);
   class Path {
     constructor(pos, colorIndex = 0) {
       this.events = [{ x: pos.x, y: pos.y }];
@@ -311,7 +320,10 @@ export default function Canvas({ getColor, setTimeIntervalsState }) {
     }
   }
 
-  const [sketchState] = useState({
+  const [sketchState, setSketchState] = useState({
+    shouldDrawHyperPlanes: shouldDrawHyperPlanesProp,
+    shouldPulseHyperPlanes: shouldPulseHyperPlanesProp,
+
     getMouseInsideGrid: (p5) => {
       const mouseX = p5.mouseX - padding;
       const mouseY = p5.mouseY - padding;
@@ -573,6 +585,18 @@ export default function Canvas({ getColor, setTimeIntervalsState }) {
       p5.pop();
     },
 
+    drawTimeIndex: (p5) => {
+      p5.push();
+      p5.translate(padding, padding);
+
+      p5.stroke(0, 0, 0);
+      p5.strokeWeight(1);
+      p5.drawingContext.setLineDash([5, 15]);
+      p5.line(0, pulseHyperPlanesY, gridSize, pulseHyperPlanesY);
+
+      p5.pop();
+    },
+
     pulseHyperPlanes: (p5) => {
       pulseHyperPlanesY -= pulseDelta;
 
@@ -583,16 +607,6 @@ export default function Canvas({ getColor, setTimeIntervalsState }) {
       paths.forEach((path) => {
         path.pulseHyperPlane(p5, pulseHyperPlanesY);
       });
-
-      p5.push();
-      p5.translate(padding, padding);
-
-      p5.stroke(0, 0, 0);
-      p5.strokeWeight(1);
-      p5.drawingContext.setLineDash([5, 15]);
-      p5.line(0, pulseHyperPlanesY, gridSize, pulseHyperPlanesY);
-
-      p5.pop();
     },
 
     drawPaths: (p5) => {
@@ -727,10 +741,12 @@ export default function Canvas({ getColor, setTimeIntervalsState }) {
       p5.draw = () => {
         p5.clear();
         sketchState.drawGrid(p5);
-        if (shouldDrawHyperPlanes) {
+
+        sketchState.drawTimeIndex(p5);
+        if (shouldDrawHyperPlanes.current) {
           sketchState.drawHyperPlanes(p5);
         }
-        if (shouldPulseHyperPlanes) {
+        if (shouldPulseHyperPlanes.current) {
           sketchState.pulseHyperPlanes(p5);
         }
         sketchState.calculateTimeIntervalsAllPaths();

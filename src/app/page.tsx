@@ -5,10 +5,14 @@ import Canvas from "@/components/Canvas";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import PausePlayButton from "@/components/PausePlayButton";
+import CheckedControl from "@/components/CheckedControl";
 
 export default function Home() {
   const [timeIntervals, setTimeIntervals] = useState([]);
+  const [paused, setPaused] = useState(false);
+  const [checked, setChecked] = useState(true);
 
   const colors = [
     "red",
@@ -59,7 +63,7 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      <div className="flex flex-row items-center justify-between w-full gap-2">
+      <div className="flex flex-col md:flex-row items-center justify-between w-full gap-2">
         <motion.div
           className="flex flex-col flex-1 items-start h-full"
           initial={{ opacity: 0, y: 10 }}
@@ -105,7 +109,7 @@ export default function Home() {
           </ul>
         </motion.div>
         <motion.div
-          className="flex-1"
+          className="flex-1 flex flex-col items-center gap-1"
           initial={{ opacity: 0, y: 10 }}
           animate={{
             opacity: [0, 1],
@@ -119,7 +123,13 @@ export default function Home() {
           <Canvas
             getColor={getColor}
             setTimeIntervalsState={setTimeIntervals}
+            shouldDrawHyperPlanesProp={checked}
+            shouldPulseHyperPlanesProp={!paused}
           />
+          <div className="flex flex-row items-center gap-4">
+            <PausePlayButton paused={paused} setPaused={setPaused} />
+            <CheckedControl checked={checked} setChecked={setChecked} />
+          </div>
         </motion.div>
         <motion.div
           className="flex flex-col flex-1 items-start h-full"
