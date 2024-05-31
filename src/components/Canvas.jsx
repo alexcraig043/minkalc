@@ -8,7 +8,8 @@ export default function Canvas({
   setTimeIntervalsState,
   setCurrentTimesState,
   shouldDrawHyperPlanesProp,
-  shouldPulseHyperPlanesProp,
+  shouldPulseProp,
+  showShowPulseProp,
 }) {
   const circleDiameter = 15;
   const numGridLines = 24;
@@ -26,15 +27,17 @@ export default function Canvas({
   let draggingIndex = null;
   let hasDragged = false;
   let shouldDrawLightCones = true;
-  let pulseHyperPlanesY = canvasSize;
+  let pulseY = canvasSize;
   const shouldDrawHyperPlanes = useRef(shouldDrawHyperPlanesProp);
-  const shouldPulseHyperPlanes = useRef(shouldPulseHyperPlanesProp);
+  const shouldPulse = useRef(shouldPulseProp);
+  const shouldShowPulse = useRef(showShowPulseProp);
   const pulseDelta = 1;
 
   useEffect(() => {
     shouldDrawHyperPlanes.current = shouldDrawHyperPlanesProp;
-    shouldPulseHyperPlanes.current = shouldPulseHyperPlanesProp;
-  }, [shouldDrawHyperPlanesProp, shouldPulseHyperPlanesProp]);
+    shouldPulse.current = shouldPulseProp;
+    shouldShowPulse.current = showShowPulseProp;
+  }, [shouldDrawHyperPlanesProp, shouldPulseProp, showShowPulseProp]);
   class Path {
     constructor(pos, colorIndex = 0) {
       this.events = [{ x: pos.x, y: pos.y }];
@@ -323,7 +326,7 @@ export default function Canvas({
 
   const [sketchState, setSketchState] = useState({
     shouldDrawHyperPlanes: shouldDrawHyperPlanesProp,
-    shouldPulseHyperPlanes: shouldPulseHyperPlanesProp,
+    shouldPulse: shouldPulseProp,
 
     getMouseInsideGrid: (p5) => {
       const mouseX = p5.mouseX - padding;
@@ -586,13 +589,13 @@ export default function Canvas({
       p5.pop();
     },
 
-    pulseHyperPlanes: (p5) => {
-      if (shouldPulseHyperPlanes.current) {
-        pulseHyperPlanesY -= pulseDelta;
+    pulse: (p5) => {
+      if (shouldPulse.current) {
+        pulseY -= pulseDelta;
       }
 
-      if (pulseHyperPlanesY < padding) {
-        pulseHyperPlanesY = gridSize;
+      if (pulseY < padding) {
+        pulseY = gridSize;
       }
 
       p5.push();
@@ -601,12 +604,12 @@ export default function Canvas({
       p5.stroke(0, 0, 0);
       p5.strokeWeight(2);
       p5.drawingContext.setLineDash([5, 15]);
-      p5.line(0, pulseHyperPlanesY, gridSize, pulseHyperPlanesY);
+      p5.line(0, pulseY, gridSize, pulseY);
 
       p5.pop();
 
       paths.forEach((path) => {
-        path.pulseHyperPlane(p5, pulseHyperPlanesY);
+        path.pulseHyperPlane(p5, pulseY);
       });
     },
 
@@ -641,13 +644,13 @@ export default function Canvas({
         }
 
         // If the first event is above the pulse hyperplane, return null
-        if (path.events[0].y <= pulseHyperPlanesY) {
+        if (path.events[0].y <= pulseY) {
           currentTimes.push(currentTime);
           continue;
         }
 
         // If the last event is below the pulse hyperplane, return null
-        // if (path.events[path.events.length - 1].y >= pulseHyperPlanesY) {
+        // if (path.events[path.events.length - 1].y >= pulseY) {
         //   currentTimes.push(currentTime);
         //   continue;
         // }
@@ -663,17 +666,14 @@ export default function Canvas({
           }
 
           // Case 1: The pulse is already above this interval
-          if (nextEvent.y > pulseHyperPlanesY) {
+          if (nextEvent.y > pulseY) {
             currentTime += path.timeIntervals[j];
             continue;
           }
 
           // Case 2: The pulse is currently inside this interval
-          if (
-            event.y >= pulseHyperPlanesY &&
-            nextEvent.y <= pulseHyperPlanesY
-          ) {
-            const offsetY = pulseHyperPlanesY - event.y;
+          if (event.y >= pulseY && nextEvent.y <= pulseY) {
+            const offsetY = pulseY - event.y;
             const ratioY = offsetY / (nextEvent.y - event.y);
             const interval = path.timeIntervals[j] * ratioY;
             currentTime += interval;
@@ -810,9 +810,12 @@ export default function Canvas({
         if (shouldDrawHyperPlanes.current) {
           sketchState.drawHyperPlanes(p5);
         }
-        sketchState.pulseHyperPlanes(p5);
+        if (shouldShowPulse.current) {
+          sketchState.pulse(p5);
+        }
+
         sketchState.calculateTimeIntervalsAllPaths();
-        if (shouldPulseHyperPlanes.current) {
+        if (shouldPulse.current) {
           sketchState.calculateCurrentTimes();
         }
         sketchState.drawPaths(p5);

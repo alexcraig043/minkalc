@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 
-export default function PausePlayButton({ paused, setPaused }) {
+export default function ControlButton({ on, setOn, onText, offText }) {
   return (
     <Button
-      onClick={() => setPaused(!paused)}
+      onClick={() => setOn(!on)}
       className="bg-primary text-white rounded-md h-8 w-14"
     >
-      {paused ? "Play" : "Pause"}
+      {on ? onText : offText}
     </Button>
   );
 }

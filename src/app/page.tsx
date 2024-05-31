@@ -6,13 +6,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import PausePlayButton from "@/components/PausePlayButton";
 import CheckedControl from "@/components/CheckedControl";
+import ControlButton from "@/components/ControlButton";
 
 export default function Home() {
   const [timeIntervals, setTimeIntervals] = useState([]);
   const [currentTimes, setCurrentTimes] = useState([]);
   const [paused, setPaused] = useState(false);
+  const [showPulse, setShowPulse] = useState(true);
   const [checked, setChecked] = useState(true);
 
   const colors = [
@@ -126,10 +127,22 @@ export default function Home() {
             setTimeIntervalsState={setTimeIntervals}
             setCurrentTimesState={setCurrentTimes}
             shouldDrawHyperPlanesProp={checked}
-            shouldPulseHyperPlanesProp={!paused}
+            shouldPulseProp={!paused}
+            showShowPulseProp={showPulse}
           />
           <div className="flex flex-row items-center gap-4">
-            <PausePlayButton paused={paused} setPaused={setPaused} />
+            <ControlButton
+              on={paused}
+              setOn={setPaused}
+              onText="Play"
+              offText="Pause"
+            />
+            <ControlButton
+              on={showPulse}
+              setOn={setShowPulse}
+              onText="Hide"
+              offText="Show"
+            />
             <CheckedControl checked={checked} setChecked={setChecked} />
           </div>
         </motion.div>
