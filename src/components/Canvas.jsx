@@ -605,7 +605,7 @@ export default function Canvas({
         pulseY -= pulseDelta;
       }
 
-      if (pulseY < padding) {
+      if (pulseY < 0) {
         pulseY = gridSize;
       }
 
